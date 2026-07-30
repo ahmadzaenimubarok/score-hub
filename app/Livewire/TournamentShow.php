@@ -326,26 +326,36 @@ class TournamentShow extends Component
 
     public function render()
     {
-        $this->tournament->load([
-            'participants',
-            'teams.members',
-            'gameMatches' => fn ($q) => $q->orderBy('round')->orderBy('match_number'),
-            'gameMatches.team1.members',
-            'gameMatches.team2.members',
-            'gameMatches.winner',
-        ]);
-
-        $bracketRounds = $this->tournament->gameMatches
-            ->groupBy('round')
-            ->sortKeys();
-
+        $bracketRounds = collect();
         $champion = null;
-        if ($this->tournament->status === 'completed') {
-            $finalMatch = $this->tournament->gameMatches()
-                ->whereNull('next_match_id')
-                ->where('status', 'completed')
-                ->first();
-            $champion = $finalMatch?->winner;
+
+        // Hanya load data yang diperlukan untuk tab aktif
+        match ($this->tab) {
+            'participants' => $this->tournament->load('participants'),
+            'teams' => $this->tournament->load('teams.members'),
+            'bracket' => null, // loaded below
+            default => $this->tournament->load('participants'),
+        };
+
+        if ($this->tab === 'bracket') {
+            $this->tournament->load([
+                'gameMatches' => fn ($q) => $q->orderBy('round')->orderBy('match_number'),
+                'gameMatches.team1.members',
+                'gameMatches.team2.members',
+                'gameMatches.winner',
+            ]);
+
+            $bracketRounds = $this->tournament->gameMatches
+                ->groupBy('round')
+                ->sortKeys();
+
+            if ($this->tournament->status === 'completed') {
+                $finalMatch = $this->tournament->gameMatches()
+                    ->whereNull('next_match_id')
+                    ->where('status', 'completed')
+                    ->first();
+                $champion = $finalMatch?->winner;
+            }
         }
 
         return view('livewire.tournament-show', [
