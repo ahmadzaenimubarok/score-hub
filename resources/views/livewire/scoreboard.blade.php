@@ -1,0 +1,214 @@
+<div class="h-dvh w-screen flex flex-col overflow-hidden"
+     @if(!$readonly)
+     x-data="{
+         timer: null,
+         isLongPress: false,
+         cooldown: false,
+         isFullscreen: document.fullscreenElement || document.webkitFullscreenElement ? true : false,
+         toggleFullscreen() {
+             let el = document.documentElement;
+             if (this.isFullscreen) {
+                 if (document.exitFullscreen) document.exitFullscreen();
+                 else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+             } else {
+                 let fs = el.requestFullscreen ? el.requestFullscreen() : el.webkitRequestFullscreen ? el.webkitRequestFullscreen() : null;
+                 if (fs) {
+                     fs.then(() => {
+                         if (screen.orientation && screen.orientation.lock) {
+                             screen.orientation.lock('landscape').catch(() => {});
+                         }
+                     }).catch(() => {});
+                 } else if (el.webkitRequestFullscreen) {
+                     el.webkitRequestFullscreen();
+                 }
+             }
+         },
+         init() {
+             let update = () => { this.isFullscreen = document.fullscreenElement || document.webkitFullscreenElement ? true : false; };
+             document.addEventListener('fullscreenchange', update);
+             document.addEventListener('webkitfullscreenchange', update);
+         },
+         clickTeam(team) {
+             if (this.isLongPress) return;
+             if (this.cooldown) return;
+             this.cooldown = true;
+             $wire.increment(team);
+             setTimeout(() => { this.cooldown = false; }, 400);
+         },
+         startLongPress(team) {
+             if (this.cooldown) return;
+             this.isLongPress = false;
+             this.timer = setTimeout(() => {
+                 this.isLongPress = true;
+                 $wire.decrement(team);
+             }, 600);
+         },
+         endLongPress() {
+             clearTimeout(this.timer);
+             this.timer = null;
+             setTimeout(() => { this.isLongPress = false; }, 50);
+         }
+     }"
+     @endif
+     wire:poll.2000ms="$refresh">
+
+    {{-- ============================================================ --}}
+    {{-- PANEL KIRI/ATAS: Black — info, game status, games won       --}}
+    {{-- ============================================================ --}}
+    <div class="flex-none h-14 bg-black flex items-center gap-3 z-10 header-safe">
+        {{-- Back --}}
+        <a href="{{ $closeUrl ?? '' }}"
+           class="flex-none w-11 h-11 flex items-center justify-center
+                  bg-white/10 hover:bg-white/20 text-white/70 hover:text-white
+                  rounded-xl transition-all text-xl leading-none no-underline active:scale-95">
+            &larr;
+        </a>
+
+        {{-- Fullscreen --}}
+        <button @click="toggleFullscreen()"
+                class="flex-none w-11 h-11 flex items-center justify-center
+                       bg-white/10 hover:bg-white/20 text-white/70 hover:text-white
+                       rounded-xl transition-all text-lg leading-none active:scale-95"
+                x-text="isFullscreen ? '⛶' : '⛶'"
+                :title="isFullscreen ? 'Keluar fullscreen' : 'Fullscreen landscape'">
+        </button>
+
+        {{-- Spacer --}}
+        <div class="flex-1"></div>
+
+        {{-- Tournament name --}}
+        <h1 class="text-xs sm:text-sm font-bold text-white/90 truncate max-w-[40vw] sm:max-w-none">🏸 {{ $tournamentName }}</h1>
+        <span class="text-[10px] text-gray-500 hidden sm:inline whitespace-nowrap">
+            · Ronde {{ $match->round }}@if($match->match_number) · Match {{ $match->match_number }}@endif
+            @if($match->next_match_id === null)<span class="text-amber-500/70 ml-1">(Final)</span>@endif
+        </span>
+
+        {{-- Spacer --}}
+        <div class="flex-1"></div>
+
+        {{-- Game label + LIVE --}}
+        <div class="flex-none flex items-center gap-1.5">
+            @if($matchOver)
+                <span class="text-[10px] px-2 py-0.5 bg-emerald-600/30 text-emerald-300 border border-emerald-600/50 rounded-full font-semibold whitespace-nowrap">
+                    MATCH SELESAI
+                </span>
+            @else
+                <span class="text-[10px] px-2 py-0.5 bg-amber-600/30 text-amber-300 border border-amber-600/50 rounded-full font-semibold whitespace-nowrap">
+                    {{ $gameLabel }}
+                </span>
+                <span class="flex items-center gap-1 text-[10px] text-red-400">
+                    <span class="inline-block w-1.5 h-1.5 bg-red-500 rounded-full" style="animation: pulse 1.5s infinite;"></span>
+                    LIVE
+                </span>
+            @endif
+        </div>
+    </div>
+
+    {{-- ============================================================ --}}
+    {{-- SCORE CARD — takes ~70% of screen, scores fill the space      --}}
+    {{-- ============================================================ --}}
+    <div class="flex-1 bg-[#4ade80] flex flex-col items-center justify-center min-h-0 p-1.5">
+        {{-- Dark card: stretches to fill green panel but capped at 80% height for breathing room --}}
+        <div class="bg-[#1e1e2e] rounded-2xl shadow-2xl w-full h-full max-h-[80%]
+                    flex flex-col items-center justify-center p-4 sm:p-8 gap-1">
+
+            {{-- SCOREBOARD title (tiny, mobile-hidden) --}}
+            <h2 class="text-center text-[9px] uppercase tracking-[0.3em] font-semibold text-gray-500 flex-none hidden sm:block">
+                SCOREBOARD
+            </h2>
+
+            {{-- Scores: flex row, each side fills half --}}
+            <div class="flex-1 w-full flex flex-row items-stretch justify-center gap-3 sm:gap-8 py-2 sm:py-6">
+
+                {{-- Team A --}}
+                <div @if(!$readonly)
+                     @mousedown.prevent="startLongPress(1)"
+                     @mouseup.prevent="clickTeam(1); endLongPress()"
+                     @mouseleave.prevent="endLongPress()"
+                     @touchstart.prevent="startLongPress(1)"
+                     @touchend.prevent="clickTeam(1); endLongPress()"
+                     @endif
+                     class="flex-1 flex flex-col items-center justify-center
+                            @if(!$readonly) cursor-pointer select-none @endif rounded-xl transition-colors duration-150
+                            {{ $matchOver ? 'opacity-60 pointer-events-none' : (!$readonly ? 'hover:bg-white/5' : '') }}
+                            {{ $matchWinner === 1 ? 'ring-2 ring-emerald-400 ring-offset-2 ring-offset-[#1e1e2e]' : '' }}
+                            @if(!$readonly) :class="cooldown ? 'bg-white/5 scale-[0.97]' : ''" @endif">
+
+                    {{-- Score number: scales to fill available space --}}
+                    <div class="font-bold text-white tabular-nums leading-none text-center"
+                         style="font-size: min(35vmin, 16rem)">
+                        {{ $scores[0] }}
+                    </div>
+
+                    {{-- Team name --}}
+                    <h3 class="font-bold tracking-wide mt-1 text-center"
+                        style="font-size: min(3.5vmin, 1.5rem); color: {{ $matchWinner === 1 ? '#4ade80' : '#22c55e' }};">
+                        {{ $match->team1?->members?->pluck('name')->join(' & ') ?: ($match->team1?->name ?? 'Team A') }}
+                    </h3>
+
+                    @if($matchOver)
+                        <div class="text-[2.5vw] sm:text-sm text-emerald-400 font-semibold mt-0.5">🏆 MENANG</div>
+                    @elseif(!$readonly)
+                        <div class="text-[2vw] sm:text-[10px] text-gray-600 font-medium hidden sm:block mt-0.5">+1 klik · -1 tahan</div>
+                    @endif
+                </div>
+
+                {{-- Team B --}}
+                <div @if(!$readonly)
+                     @mousedown.prevent="startLongPress(2)"
+                     @mouseup.prevent="clickTeam(2); endLongPress()"
+                     @mouseleave.prevent="endLongPress()"
+                     @touchstart.prevent="startLongPress(2)"
+                     @touchend.prevent="clickTeam(2); endLongPress()"
+                     @endif
+                     class="flex-1 flex flex-col items-center justify-center
+                            @if(!$readonly) cursor-pointer select-none @endif rounded-xl transition-colors duration-150
+                            {{ $matchOver ? 'opacity-60 pointer-events-none' : (!$readonly ? 'hover:bg-white/5' : '') }}
+                            {{ $matchWinner === 2 ? 'ring-2 ring-emerald-400 ring-offset-2 ring-offset-[#1e1e2e]' : '' }}
+                            @if(!$readonly) :class="cooldown ? 'bg-white/5 scale-[0.97]' : ''" @endif">
+
+                    {{-- Score number --}}
+                    <div class="font-bold text-white tabular-nums leading-none text-center"
+                         style="font-size: min(35vmin, 16rem)">
+                        {{ $scores[1] }}
+                    </div>
+
+                    {{-- Team name --}}
+                    <h3 class="font-bold tracking-wide mt-1 text-center"
+                        style="font-size: min(3.5vmin, 1.5rem); color: {{ $matchWinner === 2 ? '#4ade80' : '#22c55e' }};">
+                        {{ $match->team2?->members?->pluck('name')->join(' & ') ?: ($match->team2?->name ?? 'Team B') }}
+                    </h3>
+
+                    @if($matchOver)
+                        <div class="text-[2.5vw] sm:text-sm text-emerald-400 font-semibold mt-0.5">🏆 MENANG</div>
+                    @elseif(!$readonly)
+                        <div class="text-[2vw] sm:text-[10px] text-gray-600 font-medium hidden sm:block mt-0.5">+1 klik · -1 tahan</div>
+                    @endif
+                </div>
+
+            </div>{{-- /scores flex row --}}
+
+            {{-- Match over info --}}
+            @if($matchOver)
+                <div class="text-center flex-none">
+                    <p class="text-emerald-400 font-bold text-sm">
+                        {{ $matchWinner === 1 ? $match->team1?->members?->pluck('name')->join(' & ') : $match->team2?->members?->pluck('name')->join(' & ') }} menang!
+                    </p>
+                    <p class="text-gray-500 text-xs mt-0.5">
+                        {{ $gamesWon[0] }} - {{ $gamesWon[1] }}
+                    </p>
+                </div>
+            @endif
+
+        </div>{{-- /dark card --}}
+    </div>
+
+    <style>
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        /* Header: base px-10 + safe area for notched devices */
+        .header-safe {
+            padding-left: calc(2.5rem + env(safe-area-inset-left, 0px));
+            padding-right: calc(2.5rem + env(safe-area-inset-right, 0px));
+        }
+    </style>
+</div>
