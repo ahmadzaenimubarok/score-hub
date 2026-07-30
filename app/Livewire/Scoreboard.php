@@ -118,8 +118,6 @@ class Scoreboard extends Component
             $this->match->games_detail = $detail;
             $this->match->save();
         }
-
-        $this->refreshState();
     }
 
     /**
@@ -143,7 +141,6 @@ class Scoreboard extends Component
 
         $this->match->games_detail = $detail;
         $this->match->save();
-        $this->refreshState();
     }
 
     /**
