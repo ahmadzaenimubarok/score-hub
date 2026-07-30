@@ -6,12 +6,15 @@
             <h1 class="text-3xl font-bold">{{ $tournament->name }}</h1>
             <div class="flex items-center gap-3 mt-1">
                 <span class="text-xs px-2.5 py-1 rounded-full font-medium
-                    @if($tournament->status === 'draft') bg-gray-700 text-gray-400
+                    @if($tournament->status === 'archived') bg-gray-700/50 text-gray-500 border border-gray-600
+                    @elseif($tournament->status === 'draft') bg-gray-700 text-gray-400
                     @elseif($tournament->status === 'ongoing') bg-amber-900/50 text-amber-300 border border-amber-700
                     @else bg-emerald-900/50 text-emerald-300 border border-emerald-700
                     @endif
                 ">
-                    {{ $tournament->status }}
+                    @if($tournament->status === 'archived') Diarsipkan
+                    @else {{ $tournament->status }}
+                    @endif
                 </span>
                 <span class="text-sm text-gray-500">Kode publik: <code class="text-emerald-400 bg-gray-800 px-2 py-0.5 rounded">{{ $tournament->code }}</code></span>
                 @if($tournament->status === 'draft')
@@ -31,9 +34,18 @@
                     Mulai Turnamen
                 </button>
             @endif
-            @if($tournament->status !== 'draft')
+            @if($tournament->status !== 'draft' && $tournament->status !== 'archived')
                 <button wire:click="resetTournament" wire:confirm="Reset turnamen? Semua data pertandingan akan hilang." class="px-4 py-2 bg-red-900/50 hover:bg-red-800 text-red-300 border border-red-800 rounded-lg transition-colors text-sm">
                     Reset
+                </button>
+            @endif
+            @if($tournament->status === 'archived')
+                <button wire:click="unarchiveTournament" wire:confirm="Kembalikan turnamen?" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
+                    Kembalikan
+                </button>
+            @else
+                <button wire:click="archiveTournament" wire:confirm="Arsipkan turnamen?" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600 rounded-lg transition-colors text-sm">
+                    Arsipkan
                 </button>
             @endif
         </div>

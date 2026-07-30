@@ -2,8 +2,20 @@
     <div class="flex items-center justify-between mb-8">
         <h1 class="text-3xl font-bold">Turnamen</h1>
         <div class="text-sm text-gray-400">
-            {{ $tournaments->total() }} total
+            {{ $tournaments->total() }} {{ $showArchived ? 'diarsipkan' : 'total' }}
         </div>
+    </div>
+
+    {{-- Tabs --}}
+    <div class="flex gap-1 mb-6 border-b border-gray-700">
+        <button wire:click="showActive" class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors
+            {{ !$showArchived ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-gray-500 hover:text-gray-300' }}">
+            Aktif
+        </button>
+        <button wire:click="showArchive" class="px-4 py-2.5 text-sm font-medium border-b-2 transition-colors
+            {{ $showArchived ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-gray-500 hover:text-gray-300' }}">
+            Arsip
+        </button>
     </div>
 
     {{-- Flash Messages --}}
@@ -13,7 +25,8 @@
         </div>
     @endif
 
-    {{-- Create Form --}}
+    {{-- Create Form (only in active tab) --}}
+    @if(!$showArchived)
     <form wire:submit="create" class="mb-8 flex gap-3">
         <input
             wire:model="newName"
@@ -28,6 +41,7 @@
             + Buat
         </button>
     </form>
+    @endif
 
     {{-- Tournament List --}}
     <div class="space-y-3">
@@ -42,16 +56,22 @@
                         <p class="text-sm text-gray-500 mt-0.5">
                             {{ $t->participants_count ?? 0 }} peserta
                             &middot; {{ $t->teams_count ?? 0 }} tim
+                            @if($showArchived && $t->original_status)
+                                &middot; {{ $t->original_status }}
+                            @endif
                         </p>
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="text-xs px-2.5 py-1 rounded-full font-medium
-                            @if($t->status === 'draft') bg-gray-700 text-gray-400
+                            @if($t->status === 'archived') bg-gray-700/50 text-gray-500 border border-gray-600
+                            @elseif($t->status === 'draft') bg-gray-700 text-gray-400
                             @elseif($t->status === 'ongoing') bg-amber-900/50 text-amber-300 border border-amber-700
                             @else bg-emerald-900/50 text-emerald-300 border border-emerald-700
                             @endif
                         ">
-                            {{ $t->status }}
+                            @if($t->status === 'archived') Diarsipkan
+                            @else {{ $t->status }}
+                            @endif
                         </span>
                         <span class="text-gray-600 group-hover:text-gray-400">→</span>
                     </div>
@@ -60,7 +80,13 @@
         @empty
             <div class="text-center py-16 text-gray-500">
                 <p class="text-5xl mb-4">🏸</p>
-                <p>Belum ada turnamen. Buat yang pertama!</p>
+                <p>
+                    @if($showArchived)
+                        Belum ada turnamen yang diarsipkan.
+                    @else
+                        Belum ada turnamen. Buat yang pertama!
+                    @endif
+                </p>
             </div>
         @endforelse
     </div>

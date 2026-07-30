@@ -13,6 +13,7 @@ class TournamentIndex extends Component
     use WithPagination;
 
     public string $newName = '';
+    public bool $showArchived = false;
 
     public function create()
     {
@@ -23,13 +24,34 @@ class TournamentIndex extends Component
         Tournament::create(['name' => $this->newName]);
 
         $this->newName = '';
+        $this->resetPage();
         session()->flash('message', 'Turnamen berhasil dibuat.');
+    }
+
+    public function showActive()
+    {
+        $this->showArchived = false;
+        $this->resetPage();
+    }
+
+    public function showArchive()
+    {
+        $this->showArchived = true;
+        $this->resetPage();
     }
 
     public function render()
     {
+        $query = Tournament::withCount(['participants', 'teams'])->orderBy('created_at', 'desc');
+
+        if ($this->showArchived) {
+            $query->where('status', 'archived');
+        } else {
+            $query->where('status', '!=', 'archived');
+        }
+
         return view('livewire.tournament-index', [
-            'tournaments' => Tournament::withCount(['participants', 'teams'])->orderBy('created_at', 'desc')->paginate(10),
+            'tournaments' => $query->paginate(10),
         ]);
     }
 }

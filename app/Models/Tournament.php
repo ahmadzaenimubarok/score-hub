@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class Tournament extends Model
 {
-    protected $fillable = ['name', 'code', 'status', 'games_to_win'];
+    protected $fillable = ['name', 'code', 'status', 'original_status', 'games_to_win'];
 
     protected $attributes = [
         'status' => 'draft',

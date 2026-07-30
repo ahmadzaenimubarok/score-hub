@@ -278,6 +278,11 @@ class TournamentShow extends Component
 
     public function saveScore()
     {
+        if ($this->tournament->status === 'archived') {
+            session()->flash('error', 'Turnamen sedang diarsipkan.');
+            return;
+        }
+
         $this->validate([
             'score1' => 'required|integer|min:0',
             'score2' => 'required|integer|min:0',
@@ -347,9 +352,33 @@ class TournamentShow extends Component
     {
         $this->tournament->gameMatches()->delete();
         $this->tournament->teams()->delete();
-        $this->tournament->update(['status' => 'draft']);
+        $this->tournament->update(['status' => 'draft', 'original_status' => null]);
         $this->tournament->load(['teams', 'gameMatches']);
         session()->flash('message', 'Turnamen direset.');
+    }
+
+    public function archiveTournament()
+    {
+        if ($this->tournament->status === 'archived') return;
+
+        $this->tournament->update([
+            'original_status' => $this->tournament->status,
+            'status' => 'archived',
+        ]);
+
+        $this->redirect(route('tournaments.index'));
+    }
+
+    public function unarchiveTournament()
+    {
+        if ($this->tournament->status !== 'archived') return;
+
+        $this->tournament->update([
+            'status' => $this->tournament->original_status ?? 'draft',
+            'original_status' => null,
+        ]);
+
+        $this->redirect(route('tournaments.index'));
     }
 
     // ========== RENDER ==========
