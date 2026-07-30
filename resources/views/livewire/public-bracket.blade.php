@@ -110,6 +110,6 @@
 
     {{-- Livewire polling — live selama ada match yg berjalan --}}
     @if($tournament->status !== 'completed' && $tournament->gameMatches->contains(fn($m) => $m->status === 'ongoing'))
-        <div wire:poll.3000ms>$refresh</div>
+        <div wire:poll.3000ms="$refresh"></div>
     @endif
 </div>

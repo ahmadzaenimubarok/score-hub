@@ -1,55 +1,58 @@
 <div class="h-dvh w-screen flex flex-col overflow-hidden"
-     @if(!$readonly)
      x-data="{
-         timer: null,
-         isLongPress: false,
-         cooldown: false,
-         isFullscreen: document.fullscreenElement || document.webkitFullscreenElement ? true : false,
-         toggleFullscreen() {
-             let el = document.documentElement;
-             if (this.isFullscreen) {
-                 if (document.exitFullscreen) document.exitFullscreen();
-                 else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-             } else {
-                 let fs = el.requestFullscreen ? el.requestFullscreen() : el.webkitRequestFullscreen ? el.webkitRequestFullscreen() : null;
-                 if (fs) {
-                     fs.then(() => {
-                         if (screen.orientation && screen.orientation.lock) {
-                             screen.orientation.lock('landscape').catch(() => {});
-                         }
-                     }).catch(() => {});
-                 } else if (el.webkitRequestFullscreen) {
-                     el.webkitRequestFullscreen();
-                 }
-             }
-         },
-         init() {
-             let update = () => { this.isFullscreen = document.fullscreenElement || document.webkitFullscreenElement ? true : false; };
-             document.addEventListener('fullscreenchange', update);
-             document.addEventListener('webkitfullscreenchange', update);
-         },
-         clickTeam(team) {
-             if (this.isLongPress) return;
-             if (this.cooldown) return;
-             this.cooldown = true;
-             $wire.increment(team);
-             setTimeout(() => { this.cooldown = false; }, 400);
-         },
-         startLongPress(team) {
-             if (this.cooldown) return;
-             this.isLongPress = false;
-             this.timer = setTimeout(() => {
-                 this.isLongPress = true;
-                 $wire.decrement(team);
-             }, 600);
-         },
-         endLongPress() {
-             clearTimeout(this.timer);
-             this.timer = null;
-             setTimeout(() => { this.isLongPress = false; }, 50);
-         }
-     }"
+          isFullscreen: !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement),
+          toggleFullscreen() {
+              if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+                  let exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+                  if (exit) exit.call(document);
+              } else {
+                  let el = document.documentElement;
+                  let req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+                  if (req) {
+                      let p = req.call(el);
+                      if (p && p.then) {
+                          p.then(() => {
+                              if (screen.orientation && screen.orientation.lock)
+                                  screen.orientation.lock('landscape').catch(() => {});
+                          }).catch(() => {});
+                      }
+                  }
+              }
+          },
+          init() {
+              let update = () => {
+                  this.isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+              };
+              document.addEventListener('fullscreenchange', update);
+              document.addEventListener('webkitfullscreenchange', update);
+              document.addEventListener('mozfullscreenchange', update);
+              document.addEventListener('MSFullscreenChange', update);
+          }@if(!$readonly),
+          timer: null,
+          isLongPress: false,
+          cooldown: false,
+          clickTeam(team) {
+              if (this.isLongPress) return;
+              if (this.cooldown) return;
+              this.cooldown = true;
+              $wire.increment(team);
+              setTimeout(() => { this.cooldown = false; }, 400);
+          },
+          startLongPress(team) {
+              if (this.cooldown) return;
+              this.isLongPress = false;
+              this.timer = setTimeout(() => {
+                  this.isLongPress = true;
+                  $wire.decrement(team);
+              }, 600);
+          },
+          endLongPress() {
+              clearTimeout(this.timer);
+              this.timer = null;
+              setTimeout(() => { this.isLongPress = false; }, 50);
+          }
      @endif
+      }"
      wire:poll.2000ms="$refresh">
 
     {{-- ============================================================ --}}
@@ -59,18 +62,32 @@
         {{-- Back --}}
         <a href="{{ $closeUrl ?? '' }}"
            class="flex-none w-11 h-11 flex items-center justify-center
-                  bg-white/10 hover:bg-white/20 text-white/70 hover:text-white
-                  rounded-xl transition-all text-xl leading-none no-underline active:scale-95">
-            &larr;
+                   bg-white/10 hover:bg-white/20 text-white/70 hover:text-white
+                   rounded-xl transition-all no-underline active:scale-95">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5"/>
+                <path d="M12 19l-7-7 7-7"/>
+            </svg>
         </a>
 
         {{-- Fullscreen --}}
         <button @click="toggleFullscreen()"
                 class="flex-none w-11 h-11 flex items-center justify-center
                        bg-white/10 hover:bg-white/20 text-white/70 hover:text-white
-                       rounded-xl transition-all text-lg leading-none active:scale-95"
-                x-text="isFullscreen ? '⛶' : '⛶'"
+                       rounded-xl transition-all active:scale-95"
                 :title="isFullscreen ? 'Keluar fullscreen' : 'Fullscreen landscape'">
+            <svg x-show="!isFullscreen" x-cloak class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3H5a2 2 0 00-2 2v3"/>
+                <path d="M21 8V5a2 2 0 00-2-2h-3"/>
+                <path d="M3 16v3a2 2 0 002 2h3"/>
+                <path d="M16 21h3a2 2 0 002-2v-3"/>
+            </svg>
+            <svg x-show="isFullscreen" x-cloak class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3v3a2 2 0 01-2 2H3"/>
+                <path d="M21 8h-3a2 2 0 01-2-2V3"/>
+                <path d="M3 16h3a2 2 0 012 2v3"/>
+                <path d="M16 21v-3a2 2 0 012-2h3"/>
+            </svg>
         </button>
 
         {{-- Spacer --}}
@@ -205,7 +222,7 @@
 
     <style>
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        /* Header: base px-10 + safe area for notched devices */
+        [x-cloak] { display: none !important; }
         .header-safe {
             padding-left: calc(2.5rem + env(safe-area-inset-left, 0px));
             padding-right: calc(2.5rem + env(safe-area-inset-right, 0px));
