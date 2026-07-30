@@ -40,6 +40,11 @@ class TournamentShow extends Component
 
     public function addParticipant()
     {
+        if ($this->tournament->status !== 'draft') {
+            session()->flash('error', 'Peserta hanya bisa ditambahkan saat status draft.');
+            return;
+        }
+
         $this->validate(['participantName' => 'required|string|max:255']);
 
         $this->tournament->participants()->create([
@@ -52,6 +57,11 @@ class TournamentShow extends Component
 
     public function removeParticipant($id)
     {
+        if ($this->tournament->status !== 'draft') {
+            session()->flash('error', 'Peserta hanya bisa dihapus saat status draft.');
+            return;
+        }
+
         $this->tournament->participants()->findOrFail($id)->delete();
         $this->tournament->load('participants');
     }
@@ -60,6 +70,11 @@ class TournamentShow extends Component
 
     public function generateTeams()
     {
+        if ($this->tournament->status !== 'draft') {
+            session()->flash('error', 'Generate tim hanya bisa dilakukan saat status draft.');
+            return;
+        }
+
         $participants = $this->tournament->participants;
 
         if ($participants->count() < 2) {
@@ -95,6 +110,11 @@ class TournamentShow extends Component
 
     public function generateBracket()
     {
+        if ($this->tournament->status !== 'draft') {
+            session()->flash('error', 'Generate bracket hanya bisa dilakukan saat status draft.');
+            return;
+        }
+
         $teams = $this->tournament->teams;
 
         if ($teams->count() < 2) {
@@ -225,6 +245,11 @@ class TournamentShow extends Component
 
     public function startMatch($matchId)
     {
+        if ($this->tournament->status !== 'ongoing') {
+            session()->flash('error', 'Mulai turnamen terlebih dahulu.');
+            return;
+        }
+
         $match = $this->tournament->gameMatches()->findOrFail($matchId);
 
         if (!$match->team1_id || !$match->team2_id) {
@@ -295,6 +320,11 @@ class TournamentShow extends Component
 
     public function startTournament()
     {
+        if ($this->tournament->status !== 'draft') {
+            session()->flash('error', 'Turnamen sudah dimulai.');
+            return;
+        }
+
         $this->tournament->update(['status' => 'ongoing']);
 
         // Start first match that has both teams

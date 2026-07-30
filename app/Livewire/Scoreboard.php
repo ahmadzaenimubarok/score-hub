@@ -14,6 +14,7 @@ class Scoreboard extends Component
     public string $gameLabel = 'Game 1';
     public bool $matchOver = false;
     public ?int $matchWinner = null;
+    public array $previousGames = [];
     public bool $readonly = false;
     public string $tournamentCode = '';
     public string $tournamentName = '';
@@ -51,6 +52,18 @@ class Scoreboard extends Component
         $this->gameLabel = 'Game ' . ($this->currentGame + 1);
         $this->matchWinner = $this->match->matchWinner($this->gamesToWin);
         $this->matchOver = $this->matchWinner !== null;
+
+        $detail = $this->match->games_detail ?? [];
+        $this->previousGames = [];
+        foreach ($detail as $i => $game) {
+            $winner = $this->match->gameWinner($game['t1'], $game['t2']);
+            $this->previousGames[] = [
+                'game' => $i + 1,
+                'winner' => $winner,
+                'score1' => $game['t1'],
+                'score2' => $game['t2'],
+            ];
+        }
     }
 
     /**

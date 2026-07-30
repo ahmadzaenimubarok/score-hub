@@ -73,25 +73,29 @@
     {{-- Tab: Participants --}}
     @if($tab === 'participants')
         <div>
-            <form wire:submit="addParticipant" class="flex gap-3 mb-6">
-                <input
-                    wire:model="participantName"
-                    type="text"
-                    placeholder="Nama peserta..."
-                    class="flex-1 px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
-                    + Tambah
-                </button>
-            </form>
+            @if($tournament->status === 'draft')
+                <form wire:submit="addParticipant" class="flex gap-3 mb-6">
+                    <input
+                        wire:model="participantName"
+                        type="text"
+                        placeholder="Nama peserta..."
+                        class="flex-1 px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                    <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
+                        + Tambah
+                    </button>
+                </form>
+            @endif
 
             <div class="space-y-2">
                 @forelse ($tournament->participants as $p)
                     <div class="flex items-center justify-between px-4 py-3 bg-gray-800/50 rounded-lg">
                         <span>{{ $p->name }}</span>
-                        <button wire:click="removeParticipant({{ $p->id }})" wire:confirm="Hapus {{ $p->name }}?" class="text-red-500 hover:text-red-400 text-sm">
-                            Hapus
-                        </button>
+                        @if($tournament->status === 'draft')
+                            <button wire:click="removeParticipant({{ $p->id }})" wire:confirm="Hapus {{ $p->name }}?" class="text-red-500 hover:text-red-400 text-sm">
+                                Hapus
+                            </button>
+                        @endif
                     </div>
                 @empty
                     <p class="text-center py-8 text-gray-500">Belum ada peserta. Tambahkan minimal 2 peserta.</p>
@@ -107,15 +111,15 @@
     {{-- Tab: Teams --}}
     @if($tab === 'teams')
         <div>
-            @if($tournament->participants->count() >= 2)
+            @if($tournament->participants->count() >= 2 && $tournament->status === 'draft')
                 <button wire:click="generateTeams" class="mb-6 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
                     🔄 Generate Tim (acak)
                 </button>
-            @else
+            @elseif($tournament->participants->count() < 2)
                 <p class="mb-6 text-sm text-gray-500">Minimal 2 peserta untuk generate tim.</p>
             @endif
 
-            @if($tournament->teams->count() > 0 || $tournament->gameMatches->count() > 0)
+            @if(($tournament->teams->count() > 0 || $tournament->gameMatches->count() > 0) && $tournament->status === 'draft')
                 <button wire:click="generateBracket" class="mb-6 ml-3 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors text-sm">
                     🏆 Generate Bracket
                 </button>
@@ -193,7 +197,7 @@
                                             </div>
 
                                             {{-- Actions --}}
-                                            @if($match->status === 'pending' && $match->team1_id && $match->team2_id)
+                                            @if($match->status === 'pending' && $match->team1_id && $match->team2_id && $tournament->status === 'ongoing')
                                                 <button wire:click="startMatch({{ $match->id }})" class="mt-2 w-full text-xs py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded transition-colors">
                                                     Mulai
                                                 </button>

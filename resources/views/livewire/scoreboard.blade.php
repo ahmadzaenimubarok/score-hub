@@ -119,6 +119,27 @@
                 </span>
             @endif
         </div>
+
+        {{-- Game history dots --}}
+        @if($gamesToWin > 1 && count($previousGames) > 1)
+            <div class="flex-none flex items-center gap-1.5 ml-2 pl-2 border-l border-white/10">
+                @foreach($previousGames as $game)
+                    @if($game['winner'] === 1)
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 ring-1 ring-emerald-400/30"
+                              title="Game {{ $game['game'] }}: {{ $game['score1'] }} - {{ $game['score2'] }}"></span>
+                    @elseif($game['winner'] === 2)
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 ring-1 ring-amber-400/30"
+                              title="Game {{ $game['game'] }}: {{ $game['score1'] }} - {{ $game['score2'] }}"></span>
+                    @elseif($loop->last)
+                        <span class="w-2.5 h-2.5 rounded-full border-2 border-white/40" style="animation: pulse 1.5s infinite;"
+                              title="Game {{ $game['game'] }} sedang berlangsung"></span>
+                    @else
+                        <span class="w-2.5 h-2.5 rounded-full border border-gray-600 opacity-30"
+                              title="Game {{ $game['game'] }}"></span>
+                    @endif
+                @endforeach
+            </div>
+        @endif
     </div>
 
     {{-- ============================================================ --}}
