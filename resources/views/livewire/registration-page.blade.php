@@ -17,6 +17,11 @@
             </span>
         </div>
 
+        <a href="{{ route('public.bracket', $tournament->code) }}"
+           class="mt-5 block w-full py-3.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 hover:text-white font-semibold rounded-xl transition-all text-base">
+            Lihat Halaman Publik ↗
+        </a>
+
         <div class="mt-5 grid grid-cols-2 gap-3 text-sm">
             <div class="bg-gray-800/50 rounded-xl px-4 py-3">
                 <div class="text-gray-500 text-xs mb-0.5">Format</div>
