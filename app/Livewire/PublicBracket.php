@@ -152,12 +152,15 @@ class PublicBracket extends Component
 
         // Connector lines (y dihitung relatif ke area card, ditambah headerH di akhir)
         $lines = [];
-        $gapCenter = $hGap / 2;
         foreach ($roundNums as $idx => $r) {
             if ($idx === count($roundNums) - 1) {
                 break; // round terakhir tidak punya next
             }
             $next = $roundNums[$idx + 1];
+            // Garis membentang dari tepi KANAN kolom round ini ke tepi KIRI kolom round next
+            $x1 = $roundLeft[$r] + $cardW;
+            $gapCenter = $x1 + $hGap / 2;
+            $x2 = $x1 + $hGap;
 
             foreach ($byRound[$next] as $j => $m) {
                 $yc = $centers[$next][$j] ?? null;
@@ -168,16 +171,16 @@ class PublicBracket extends Component
                 $f2 = $centers[$r][2 * $j + 1] ?? null;
 
                 if ($f1 !== null && $f2 !== null) {
-                    // bracket penuh: dua feeder bertemu di tengah
-                    $lines[] = [0, $f1, $gapCenter, $f1];
-                    $lines[] = [0, $f2, $gapCenter, $f2];
+                    // bracket penuh: dua feeder bertemu di tengah gap
+                    $lines[] = [$x1, $f1, $gapCenter, $f1];
+                    $lines[] = [$x1, $f2, $gapCenter, $f2];
                     $lines[] = [$gapCenter, min($f1, $f2), $gapCenter, max($f1, $f2)];
-                    $lines[] = [$gapCenter, $yc, $hGap, $yc];
+                    $lines[] = [$gapCenter, $yc, $x2, $yc];
                 } elseif ($f1 !== null) {
                     // bye: garis lurus dari feeder ke match berikutnya
-                    $lines[] = [0, $f1, $hGap, $f1];
+                    $lines[] = [$x1, $f1, $x2, $f1];
                 } elseif ($f2 !== null) {
-                    $lines[] = [0, $f2, $hGap, $f2];
+                    $lines[] = [$x1, $f2, $x2, $f2];
                 }
             }
         }
