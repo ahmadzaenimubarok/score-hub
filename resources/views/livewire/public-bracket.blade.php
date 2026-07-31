@@ -105,7 +105,8 @@
     @endif
 
     <div class="text-center text-xs text-gray-700 mt-8 pb-8">
-        Badminton Fun Match &middot; score.jawakoentji.my.id
+        <a href="https://github.com/ahmadzaenimubarok/score-hub" target="_blank" class="hover:text-gray-500 transition-colors">🐙 GitHub</a>
+        &middot; Badminton Fun Match &middot; score.jawakoentji.my.id
     </div>
 
     {{-- Livewire polling — live selama ada match yg berjalan --}}
