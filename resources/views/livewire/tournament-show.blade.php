@@ -30,6 +30,30 @@
         </div>
         <div class="flex gap-2"
              x-data="{ copied: false }">
+            <button x-data="{ shared: false }" @click="
+                const url = '{{ route('registration.show', $tournament->code) }}';
+                if (navigator.share) {
+                    navigator.share({
+                        title: '{{ $tournament->name }}',
+                        text: 'Daftar turnamen {{ $tournament->name }} 🏸',
+                        url: url
+                    }).catch(() => {});
+                } else {
+                    navigator.clipboard.writeText(url);
+                    shared = true;
+                    setTimeout(() => shared = false, 2000);
+                }
+            "
+                    class="flex items-center gap-2 px-3 h-9 bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-300 border border-emerald-800 rounded-lg transition-colors"
+                    :title="shared ? 'Tersalin!' : 'Bagikan halaman pendaftaran'">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                    <circle cx="8.5" cy="7" r="4"/>
+                    <line x1="20" y1="8" x2="20" y2="14"/>
+                    <line x1="23" y1="11" x2="17" y2="11"/>
+                </svg>
+                <span class="text-xs font-medium" x-text="shared ? 'Tersalin!' : 'Bagikan'"></span>
+            </button>
             <button @click="
                 navigator.clipboard.writeText('{{ route('public.bracket', $tournament->code) }}');
                 copied = true;
