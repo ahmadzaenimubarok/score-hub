@@ -16,6 +16,8 @@ class Scoreboard extends Component
     public ?int $matchWinner = null;
     public array $previousGames = [];
     public bool $readonly = false;
+    public bool $showSwitchCourt = false;
+    public bool $courtFlipped = false;
     public string $tournamentCode = '';
     public string $tournamentName = '';
     public int $gamesToWin = 2;
@@ -50,8 +52,22 @@ class Scoreboard extends Component
         [$w1, $w2] = $this->match->gamesWon();
         $this->gamesWon = [$w1, $w2];
         $this->gameLabel = 'Game ' . ($this->currentGame + 1);
+        $this->courtFlipped = $this->currentGame % 2 == 1;
         $this->matchWinner = $this->match->matchWinner($this->gamesToWin);
         $this->matchOver = $this->matchWinner !== null;
+
+        // Auto-detect: jika game terakhir sudah selesai tapi match belum over,
+        // tampilkan prompt pindah lapangan (cover case refresh mid-switch)
+        if (!$this->matchOver && !$this->showSwitchCourt) {
+            $detail = $this->match->games_detail ?? [];
+            $lastIdx = count($detail) - 1;
+            if ($lastIdx >= 0 && $this->currentGame === $lastIdx) {
+                $lastGame = $detail[$lastIdx];
+                if ($this->match->gameWinner($lastGame['t1'], $lastGame['t2']) !== null) {
+                    $this->showSwitchCourt = true;
+                }
+            }
+        }
 
         $detail = $this->match->games_detail ?? [];
         $this->previousGames = [];
@@ -74,6 +90,7 @@ class Scoreboard extends Component
         if ($this->readonly) return;
         if ($this->match->status !== 'ongoing') return;
         if ($this->matchOver) return;
+        if ($this->showSwitchCourt) return;
 
         $detail = $this->match->games_detail;
         $idx = $this->currentGame;
@@ -109,10 +126,9 @@ class Scoreboard extends Component
                 // Advance winner to next match
                 $this->advanceWinner($winnerId);
             } else {
-                // Start next game
-                $detail[] = ['t1' => 0, 't2' => 0];
-                $this->match->games_detail = $detail;
+                // Game over — prompt court switch before starting next game
                 $this->match->save();
+                $this->showSwitchCourt = true;
             }
         } else {
             $this->match->games_detail = $detail;
@@ -128,6 +144,7 @@ class Scoreboard extends Component
         if ($this->readonly) return;
         if ($this->match->status !== 'ongoing') return;
         if ($this->matchOver) return;
+        if ($this->showSwitchCourt) return;
 
         $detail = $this->match->games_detail;
         $idx = $this->currentGame;
@@ -184,6 +201,16 @@ class Scoreboard extends Component
             // Final match selesai
             $this->match->tournament->update(['status' => 'completed']);
         }
+    }
+
+    public function confirmSwitchCourt(): void
+    {
+        if ($this->readonly) return;
+        $detail = $this->match->games_detail;
+        $detail[] = ['t1' => 0, 't2' => 0];
+        $this->match->games_detail = $detail;
+        $this->match->save();
+        $this->showSwitchCourt = false;
     }
 
     public function render()
