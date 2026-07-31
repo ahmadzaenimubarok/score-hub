@@ -202,7 +202,7 @@
                         {{ $leftName }}
                     </h3>
 
-                    @if($matchOver)
+                    @if($matchOver && $leftIsWinner)
                         <div class="text-[2.5vw] sm:text-sm text-emerald-400 font-semibold mt-0.5">🏆 MENANG</div>
                     @elseif($clickable)
                         <div class="text-[2vw] sm:text-[10px] text-gray-600 font-medium hidden sm:block mt-0.5">+1 klik · -1 tahan</div>
@@ -235,7 +235,7 @@
                         {{ $rightName }}
                     </h3>
 
-                    @if($matchOver)
+                    @if($matchOver && $rightIsWinner)
                         <div class="text-[2.5vw] sm:text-sm text-emerald-400 font-semibold mt-0.5">🏆 MENANG</div>
                     @elseif($clickable)
                         <div class="text-[2vw] sm:text-[10px] text-gray-600 font-medium hidden sm:block mt-0.5">+1 klik · -1 tahan</div>
