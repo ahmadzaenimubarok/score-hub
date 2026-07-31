@@ -1,15 +1,26 @@
 <?php
 
+use App\Livewire\AdminLogin;
 use App\Livewire\PublicBracket;
 use App\Livewire\RegistrationPage;
 use App\Livewire\Scoreboard;
 use App\Livewire\TournamentIndex;
 use App\Livewire\TournamentShow;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect('/admin'));
 
-Route::prefix('admin')->group(function () {
+Route::get('/login', AdminLogin::class)->name('login');
+Route::post('/logout', function () {
+    Auth::logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+
+    return redirect('/login');
+})->middleware('auth');
+
+Route::prefix('admin')->middleware('auth')->group(function () {
     Route::get('/', TournamentIndex::class)->name('tournaments.index');
     Route::get('/tournaments/{tournament}', TournamentShow::class)->name('tournaments.show');
 });

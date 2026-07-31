@@ -17,8 +17,15 @@
                     </a>
                     <span class="text-sm text-gray-400">Admin</span>
                 </div>
-                <div class="flex items-center gap-2 text-sm text-gray-400">
-                    <span>score.jawakoentji.my.id</span>
+                <div class="flex items-center gap-3 text-sm text-gray-400">
+                    <span class="hidden sm:inline">score.jawakoentji.my.id</span>
+                    @auth
+                        <span class="text-gray-500 hidden sm:inline">·</span>
+                        <form method="POST" action="{{ url('/logout') }}" class="inline">
+                            @csrf
+                            <button type="submit" class="text-gray-400 hover:text-red-400 transition-colors">Keluar</button>
+                        </form>
+                    @endauth
                 </div>
             </div>
         </div>
