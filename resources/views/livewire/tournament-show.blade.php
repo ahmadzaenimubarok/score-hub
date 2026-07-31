@@ -186,102 +186,124 @@
                     <p>Generate tim & bracket terlebih dahulu.</p>
                 </div>
             @else
-                {{-- Bracket Display --}}
+                {{-- Bracket Display (connector layout) --}}
                 <div class="overflow-x-auto pb-6">
-                    <div class="flex gap-6 min-w-[600px]" style="min-height: {{ count($bracketRounds) * 120 + 100 }}px;">
-                        @foreach ($bracketRounds as $round => $matches)
-                            <div class="flex-shrink-0 w-56">
-                                <h3 class="text-sm font-semibold text-gray-400 mb-4 uppercase tracking-wider">
+                    <div class="relative mx-auto"
+                         style="width: {{ $bracketLayout['width'] }}px; height: {{ $bracketLayout['height'] }}px;">
+
+                        {{-- Round headers --}}
+                        @foreach ($bracketLayout['rounds'] as $round => $matches)
+                            <div class="absolute top-0 flex items-center justify-center"
+                                 style="left: {{ $bracketLayout['roundLeft'][$round] }}px; width: 224px; height: {{ $bracketLayout['headerH'] }}px;">
+                                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider text-center">
                                     Ronde {{ $round }}
                                     @if($loop->last)<span class="text-emerald-400 ml-2">(Final)</span>@endif
                                 </h3>
-                                <div class="space-y-4">
-                                    @foreach ($matches as $match)
-                                        <div class="bg-gray-800 border border-gray-700 rounded-lg p-3 {{ $match->status === 'ongoing' ? 'border-amber-600' : '' }} {{ $match->status === 'completed' ? 'border-emerald-800' : '' }}">
-                                            {{-- Team 1 --}}
-                                            <div class="flex items-center justify-between {{ $match->isTeam1Winner() ? 'text-emerald-400 font-semibold' : ($match->team1 ? 'text-gray-200' : 'text-gray-600') }}">
-                                                <span class="text-sm truncate">
-                                                    @if($match->team1)
-                                                        {{ $match->team1->name }}
-                                                        @if($match->team1->members->isNotEmpty())
-                                                            <span class="text-xs text-gray-500 ml-1">({{ $match->team1->membersList() }})</span>
-                                                        @endif
-                                                    @elseif($match->isBye())
-                                                        <span class="text-yellow-600">BYE</span>
-                                                    @else
-                                                        —
-                                                    @endif
-                                                </span>
-                                                <span class="text-sm font-mono ml-2">{{ $match->status !== 'pending' ? $match->score1 : '' }}</span>
-                                            </div>
-                                            {{-- VS --}}
-                                            <div class="text-xs text-gray-600 my-1 text-center">VS</div>
-                                            {{-- Team 2 --}}
-                                            <div class="flex items-center justify-between {{ $match->isTeam2Winner() ? 'text-emerald-400 font-semibold' : ($match->team2 ? 'text-gray-200' : 'text-gray-600') }}">
-                                                <span class="text-sm truncate">
-                                                    @if($match->team2)
-                                                        {{ $match->team2->name }}
-                                                        @if($match->team2->members->isNotEmpty())
-                                                            <span class="text-xs text-gray-500 ml-1">({{ $match->team2->membersList() }})</span>
-                                                        @endif
-                                                    @elseif($match->isBye())
-                                                        <span class="text-yellow-600">BYE</span>
-                                                    @else
-                                                        —
-                                                    @endif
-                                                </span>
-                                                <span class="text-sm font-mono ml-2">{{ $match->status !== 'pending' ? $match->score2 : '' }}</span>
-                                            </div>
-
-                                            {{-- Actions --}}
-                                            @if($match->status === 'pending' && $match->team1_id && $match->team2_id && $tournament->status === 'ongoing')
-                                                <button wire:click="startMatch({{ $match->id }})" class="mt-2 w-full text-xs py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded transition-colors">
-                                                    Mulai
-                                                </button>
-                                            @endif
-
-                                            @if($match->status === 'ongoing')
-                                                <a href="{{ route('scoreboard.show', $match->id) }}"
-                                                   class="block mt-2 w-full text-xs py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors text-center">
-                                                    🏸 Scoreboard
-                                                </a>
-                                            @endif
-
-                                            @if($match->status === 'completed' && $match->winner)
-                                                <div class="mt-2 text-xs {{ $match->isBye() ? 'text-yellow-500' : 'text-emerald-500' }} text-center">
-                                                    @if($match->isBye())
-                                                        ↪ {{ $match->winner->name }} (BYE)
-                                                    @else
-                                                        ✓ {{ $match->winner->name }} menang
-                                                    @endif
-                                                </div>
-                                            @endif
-
-                                            {{-- Edit Score Modal inline --}}
-                                            @if($updatingMatchId === $match->id)
-                                                <div class="mt-3 p-3 bg-gray-900 rounded-lg border border-gray-600">
-                                                    <div class="flex gap-2 items-center mb-2">
-                                                        <div class="flex-1">
-                                                            <label class="text-xs text-gray-400">{{ $match->team1->name ?? 'Team 1' }}</label>
-                                                            <input wire:model="score1" type="number" min="0" class="w-full px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm text-center">
-                                                        </div>
-                                                        <span class="text-gray-500 text-xs mt-5">:</span>
-                                                        <div class="flex-1">
-                                                            <label class="text-xs text-gray-400">{{ $match->team2->name ?? 'Team 2' }}</label>
-                                                            <input wire:model="score2" type="number" min="0" class="w-full px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm text-center">
-                                                        </div>
-                                                    </div>
-                                                    <div class="flex gap-2">
-                                                        <button wire:click="saveScore" class="flex-1 text-xs py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded">Simpan</button>
-                                                        <button wire:click="cancelEdit" class="flex-1 text-xs py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded">Batal</button>
-                                                    </div>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    @endforeach
-                                </div>
                             </div>
                         @endforeach
+
+                        {{-- Match cards --}}
+                        @foreach ($bracketLayout['rounds'] as $round => $matches)
+                            <div class="absolute top-0" style="left: {{ $bracketLayout['roundLeft'][$round] }}px;">
+                                @foreach ($matches as $match)
+                                    <div class="absolute w-56 flex flex-col justify-center p-3 bg-gray-800 border rounded-lg
+                                                {{ $match->status === 'ongoing' ? 'border-amber-600' : ($match->status === 'completed' ? 'border-emerald-800' : 'border-gray-700') }}"
+                                         style="top: {{ $bracketLayout['tops'][$match->id] }}px; height: {{ $bracketLayout['cardH'] }}px;">
+                                        {{-- Team 1 --}}
+                                        <div class="flex items-center justify-between {{ $match->isTeam1Winner() ? 'text-emerald-400 font-semibold' : ($match->team1 ? 'text-gray-200' : 'text-gray-600') }}">
+                                            <span class="text-sm truncate">
+                                                @if($match->team1)
+                                                    {{ $match->team1->name }}
+                                                    @if($match->team1->members->isNotEmpty())
+                                                        <span class="text-xs text-gray-500 ml-1">({{ $match->team1->membersList() }})</span>
+                                                    @endif
+                                                @elseif($match->isBye())
+                                                    <span class="text-yellow-600">BYE</span>
+                                                @else
+                                                    —
+                                                @endif
+                                            </span>
+                                            <span class="text-sm font-mono ml-2">{{ $match->status !== 'pending' ? $match->score1 : '' }}</span>
+                                        </div>
+                                        {{-- VS --}}
+                                        <div class="text-xs text-gray-600 my-1 text-center">VS</div>
+                                        {{-- Team 2 --}}
+                                        <div class="flex items-center justify-between {{ $match->isTeam2Winner() ? 'text-emerald-400 font-semibold' : ($match->team2 ? 'text-gray-200' : 'text-gray-600') }}">
+                                            <span class="text-sm truncate">
+                                                @if($match->team2)
+                                                    {{ $match->team2->name }}
+                                                    @if($match->team2->members->isNotEmpty())
+                                                        <span class="text-xs text-gray-500 ml-1">({{ $match->team2->membersList() }})</span>
+                                                    @endif
+                                                @elseif($match->isBye())
+                                                    <span class="text-yellow-600">BYE</span>
+                                                @else
+                                                    —
+                                                @endif
+                                            </span>
+                                            <span class="text-sm font-mono ml-2">{{ $match->status !== 'pending' ? $match->score2 : '' }}</span>
+                                        </div>
+
+                                        {{-- Actions --}}
+                                        @if($match->status === 'pending' && $match->team1_id && $match->team2_id && $tournament->status === 'ongoing')
+                                            <button wire:click="startMatch({{ $match->id }})" class="mt-2 w-full text-xs py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded transition-colors">
+                                                Mulai
+                                            </button>
+                                        @endif
+
+                                        @if($match->status === 'ongoing')
+                                            <a href="{{ route('scoreboard.show', $match->id) }}"
+                                               class="block mt-2 w-full text-xs py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors text-center">
+                                                🏸 Scoreboard
+                                            </a>
+                                        @endif
+
+                                        @if($match->status === 'completed' && $match->winner)
+                                            <div class="mt-2 text-xs {{ $match->isBye() ? 'text-yellow-500' : 'text-emerald-500' }} text-center">
+                                                @if($match->isBye())
+                                                    ↪ {{ $match->winner->name }} (BYE)
+                                                @else
+                                                    ✓ {{ $match->winner->name }} menang
+                                                @endif
+                                            </div>
+                                        @endif
+
+                                        {{-- Edit Score Modal inline --}}
+                                        @if($updatingMatchId === $match->id)
+                                            <div class="mt-3 p-3 bg-gray-900 rounded-lg border border-gray-600">
+                                                <div class="flex gap-2 items-center mb-2">
+                                                    <div class="flex-1">
+                                                        <label class="text-xs text-gray-400">{{ $match->team1->name ?? 'Team 1' }}</label>
+                                                        <input wire:model="score1" type="number" min="0" class="w-full px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm text-center">
+                                                    </div>
+                                                    <span class="text-gray-500 text-xs mt-5">:</span>
+                                                    <div class="flex-1">
+                                                        <label class="text-xs text-gray-400">{{ $match->team2->name ?? 'Team 2' }}</label>
+                                                        <input wire:model="score2" type="number" min="0" class="w-full px-2 py-1 bg-gray-800 border border-gray-700 rounded text-sm text-center">
+                                                    </div>
+                                                </div>
+                                                <div class="flex gap-2">
+                                                    <button wire:click="saveScore" class="flex-1 text-xs py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded">Simpan</button>
+                                                    <button wire:click="cancelEdit" class="flex-1 text-xs py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded">Batal</button>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endforeach
+
+                        {{-- Connectors --}}
+                        <svg class="absolute top-0 left-0 pointer-events-none"
+                             width="{{ $bracketLayout['width'] }}" height="{{ $bracketLayout['height'] }}"
+                             viewBox="0 0 {{ $bracketLayout['width'] }} {{ $bracketLayout['height'] }}">
+                            @foreach ($bracketLayout['lines'] as $line)
+                                <line x1="{{ $line[0] }}" y1="{{ $line[1] }}"
+                                      x2="{{ $line[2] }}" y2="{{ $line[3] }}"
+                                      stroke="#52525b" stroke-width="2" stroke-linecap="round"/>
+                            @endforeach
+                        </svg>
+
                     </div>
                 </div>
             @endif

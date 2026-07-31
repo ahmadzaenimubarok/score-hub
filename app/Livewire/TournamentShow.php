@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\ComputesBracketLayout;
 use App\Models\GameMatch;
 use App\Models\Participant;
 use App\Models\Team;
@@ -16,6 +17,7 @@ use Illuminate\Support\Collection;
 class TournamentShow extends Component
 {
     use WithPagination;
+    use ComputesBracketLayout;
 
     public Tournament $tournament;
     public string $activeTab = 'participants';
@@ -419,6 +421,7 @@ class TournamentShow extends Component
 
         return view('livewire.tournament-show', [
             'bracketRounds' => $bracketRounds,
+            'bracketLayout' => $this->tab === 'bracket' ? $this->bracketLayout($this->tournament->gameMatches, cardH: 160) : [],
             'champion' => $champion,
         ]);
     }
