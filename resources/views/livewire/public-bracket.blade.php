@@ -113,7 +113,8 @@
                     @foreach ($bracketLayout['lines'] as $line)
                         <line x1="{{ $line[0] }}" y1="{{ $line[1] }}"
                               x2="{{ $line[2] }}" y2="{{ $line[3] }}"
-                              stroke="#52525b" stroke-width="2" stroke-linecap="round"/>
+                              stroke="{{ $line[4] ?? false ? '#10b981' : '#52525b' }}"
+                              stroke-width="2" stroke-linecap="round"/>
                     @endforeach
                 </svg>
 

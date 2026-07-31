@@ -44,6 +44,7 @@ trait ComputesBracketLayout
         $centers = [];
         $tops = [];
         $maxCenter = 0;
+        $matchStatus = [];
 
         // Void match = slot yang tidak akan pernah terisi:
         // - Round 1: kedua slot kosong
@@ -92,6 +93,7 @@ trait ComputesBracketLayout
 
                 $centers[$r][$i] = $c;
                 $tops[$m->id] = $headerH + $c - $cardH / 2;
+                $matchStatus[$r][$i] = $m->status;
                 $maxCenter = max($maxCenter, $c);
                 $compact++;
             }
@@ -117,17 +119,22 @@ trait ComputesBracketLayout
                 $f1 = $centers[$r][2 * $j] ?? null;
                 $f2 = $centers[$r][2 * $j + 1] ?? null;
 
+                // Relasi "terpakai" = feeder match sudah selesai (pemenang sudah di-advance
+                // ke slot next match). Garis hijau menandai jalur yang sudah dilalui pemenang.
+                $used1 = ($matchStatus[$r][2 * $j] ?? null) === 'completed';
+                $used2 = ($matchStatus[$r][2 * $j + 1] ?? null) === 'completed';
+
                 if ($f1 !== null && $f2 !== null) {
                     // bracket penuh: dua feeder bertemu di tengah gap
-                    $lines[] = [$x1, $f1, $gapCenter, $f1];
-                    $lines[] = [$x1, $f2, $gapCenter, $f2];
-                    $lines[] = [$gapCenter, min($f1, $f2), $gapCenter, max($f1, $f2)];
-                    $lines[] = [$gapCenter, $yc, $x2, $yc];
+                    $lines[] = [$x1, $f1, $gapCenter, $f1, $used1];
+                    $lines[] = [$x1, $f2, $gapCenter, $f2, $used2];
+                    $lines[] = [$gapCenter, min($f1, $f2), $gapCenter, max($f1, $f2), $used1 || $used2];
+                    $lines[] = [$gapCenter, $yc, $x2, $yc, $used1 || $used2];
                 } elseif ($f1 !== null) {
                     // bye: garis lurus dari feeder ke match berikutnya
-                    $lines[] = [$x1, $f1, $x2, $f1];
+                    $lines[] = [$x1, $f1, $x2, $f1, $used1];
                 } elseif ($f2 !== null) {
-                    $lines[] = [$x1, $f2, $x2, $f2];
+                    $lines[] = [$x1, $f2, $x2, $f2, $used2];
                 }
             }
         }
