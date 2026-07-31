@@ -10,7 +10,7 @@ use App\Livewire\TournamentShow;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => redirect('/admin'));
+Route::view('/', 'landing')->name('landing');
 
 Route::get('/login', AdminLogin::class)->name('login');
 Route::post('/logout', function () {
