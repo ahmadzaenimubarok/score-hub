@@ -29,72 +29,94 @@
     @endif
 
     {{-- Bracket --}}
-    @if($tournament->gameMatches->count() > 0)
+    @if($tournament->gameMatches->count() > 0 && count($bracketLayout['rounds']) > 0)
         <div class="overflow-x-auto pb-8">
-            <div class="flex gap-6 min-w-[600px]" style="min-height: {{ count($bracketRounds) * 120 + 100 }}px;">
-                @foreach ($bracketRounds as $round => $matches)
-                    <div class="flex-shrink-0 w-56">
-                        <h3 class="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wider text-center">
+            <div class="relative mx-auto"
+                 style="width: {{ $bracketLayout['width'] }}px; height: {{ $bracketLayout['height'] }}px;">
+
+                {{-- Round headers --}}
+                @foreach ($bracketLayout['rounds'] as $round => $matches)
+                    <div class="absolute top-0 flex items-center justify-center"
+                         style="left: {{ $bracketLayout['roundLeft'][$round] }}px; width: 224px; height: {{ $bracketLayout['headerH'] }}px;">
+                        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider text-center">
                             Ronde {{ $round }}
                             @if($loop->last)<span class="text-emerald-500 ml-1">🏆</span>@endif
                         </h3>
-                        <div class="space-y-4">
-                            @foreach ($matches as $match)
-                                <div class="bg-gray-900 border border-gray-800 rounded-lg p-3 {{ $match->status === 'ongoing' ? 'border-amber-700' : '' }} {{ $match->status === 'completed' ? 'border-emerald-900' : '' }}">
-                                    {{-- Team 1 --}}
-                                    <div class="flex items-center justify-between {{ $match->isTeam1Winner() ? 'text-emerald-400 font-semibold' : ($match->team1 ? 'text-gray-300' : 'text-gray-700') }}">
-                                        <span class="text-sm truncate">
-                                            @if($match->team1)
-                                                {{ $match->team1->name }}
-                                                @if($match->team1->members->isNotEmpty())
-                                                    <span class="text-xs text-gray-500 ml-1">({{ $match->team1->membersList() }})</span>
-                                                @endif
-                                            @elseif($match->isBye())
-                                                <span class="text-yellow-700">BYE</span>
-                                            @else
-                                                —
-                                            @endif
-                                        </span>
-                                        <span class="text-sm font-mono ml-2">{{ $match->status !== 'pending' ? $match->score1 : '' }}</span>
-                                    </div>
-                                    {{-- VS --}}
-                                    <div class="text-xs text-gray-700 my-1 text-center">VS</div>
-                                    {{-- Team 2 --}}
-                                    <div class="flex items-center justify-between {{ $match->isTeam2Winner() ? 'text-emerald-400 font-semibold' : ($match->team2 ? 'text-gray-300' : 'text-gray-700') }}">
-                                        <span class="text-sm truncate">
-                                            @if($match->team2)
-                                                {{ $match->team2->name }}
-                                                @if($match->team2->members->isNotEmpty())
-                                                    <span class="text-xs text-gray-500 ml-1">({{ $match->team2->membersList() }})</span>
-                                                @endif
-                                            @elseif($match->isBye())
-                                                <span class="text-yellow-700">BYE</span>
-                                            @else
-                                                —
-                                            @endif
-                                        </span>
-                                        <span class="text-sm font-mono ml-2">{{ $match->status !== 'pending' ? $match->score2 : '' }}</span>
-                                    </div>
-                                    @if($match->status === 'ongoing')
-                                        <a href="{{ route('public.scoreboard', ['code' => $tournament->code, 'gameMatch' => $match->id]) }}"
-                                           class="block mt-2 text-xs py-1 bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 rounded text-center transition-colors">
-                                            🏸 Scoreboard
-                                        </a>
-                                    @endif
-                                    @if($match->status === 'completed' && $match->winner)
-                                        <div class="mt-1.5 text-xs {{ $match->isBye() ? 'text-yellow-700' : 'text-emerald-600' }} text-center">
-                                            @if($match->isBye())
-                                                ↪ {{ $match->winner->name }} (BYE)
-                                            @else
-                                                ✓ {{ $match->winner->name }}
-                                            @endif
-                                        </div>
-                                    @endif
-                                </div>
-                            @endforeach
-                        </div>
                     </div>
                 @endforeach
+
+                {{-- Match cards --}}
+                @foreach ($bracketLayout['rounds'] as $round => $matches)
+                    <div class="absolute top-0" style="left: {{ $bracketLayout['roundLeft'][$round] }}px;">
+                        @foreach ($matches as $match)
+                            <div class="absolute w-56 flex flex-col justify-center p-3 bg-gray-900 border rounded-lg
+                                        {{ $match->status === 'ongoing' ? 'border-amber-700' : ($match->status === 'completed' ? 'border-emerald-900' : 'border-gray-800') }}"
+                                 style="top: {{ $bracketLayout['tops'][$match->id] }}px; height: {{ $bracketLayout['cardH'] }}px;">
+                                {{-- Team 1 --}}
+                                <div class="flex items-center justify-between {{ $match->isTeam1Winner() ? 'text-emerald-400 font-semibold' : ($match->team1 ? 'text-gray-300' : 'text-gray-700') }}">
+                                    <span class="text-sm truncate">
+                                        @if($match->team1)
+                                            {{ $match->team1->name }}
+                                            @if($match->team1->members->isNotEmpty())
+                                                <span class="text-xs text-gray-500 ml-1">({{ $match->team1->membersList() }})</span>
+                                            @endif
+                                        @elseif($match->isBye())
+                                            <span class="text-yellow-700">BYE</span>
+                                        @else
+                                            —
+                                        @endif
+                                    </span>
+                                    <span class="text-sm font-mono ml-2">{{ $match->status !== 'pending' ? $match->score1 : '' }}</span>
+                                </div>
+                                {{-- VS --}}
+                                <div class="text-xs text-gray-700 my-1 text-center">VS</div>
+                                {{-- Team 2 --}}
+                                <div class="flex items-center justify-between {{ $match->isTeam2Winner() ? 'text-emerald-400 font-semibold' : ($match->team2 ? 'text-gray-300' : 'text-gray-700') }}">
+                                    <span class="text-sm truncate">
+                                        @if($match->team2)
+                                            {{ $match->team2->name }}
+                                            @if($match->team2->members->isNotEmpty())
+                                                <span class="text-xs text-gray-500 ml-1">({{ $match->team2->membersList() }})</span>
+                                            @endif
+                                        @elseif($match->isBye())
+                                            <span class="text-yellow-700">BYE</span>
+                                        @else
+                                            —
+                                        @endif
+                                    </span>
+                                    <span class="text-sm font-mono ml-2">{{ $match->status !== 'pending' ? $match->score2 : '' }}</span>
+                                </div>
+                                @if($match->status === 'ongoing')
+                                    <a href="{{ route('public.scoreboard', ['code' => $tournament->code, 'gameMatch' => $match->id]) }}"
+                                       class="block mt-2 text-xs py-1 bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 rounded text-center transition-colors">
+                                        🏸 Scoreboard
+                                    </a>
+                                @endif
+                                @if($match->status === 'completed' && $match->winner)
+                                    <div class="mt-1.5 text-xs {{ $match->isBye() ? 'text-yellow-700' : 'text-emerald-600' }} text-center">
+                                        @if($match->isBye())
+                                            ↪ {{ $match->winner->name }} (BYE)
+                                        @else
+                                            ✓ {{ $match->winner->name }}
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @endforeach
+
+                {{-- Connectors --}}
+                <svg class="absolute top-0 left-0 pointer-events-none"
+                     width="{{ $bracketLayout['width'] }}" height="{{ $bracketLayout['height'] }}"
+                     viewBox="0 0 {{ $bracketLayout['width'] }} {{ $bracketLayout['height'] }}">
+                    @foreach ($bracketLayout['lines'] as $line)
+                        <line x1="{{ $line[0] }}" y1="{{ $line[1] }}"
+                              x2="{{ $line[2] }}" y2="{{ $line[3] }}"
+                              stroke="#52525b" stroke-width="2" stroke-linecap="round"/>
+                    @endforeach
+                </svg>
+
             </div>
         </div>
     @else
