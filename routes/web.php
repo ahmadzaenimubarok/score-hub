@@ -2,6 +2,8 @@
 
 use App\Livewire\AdminLogin;
 use App\Livewire\PublicBracket;
+use App\Livewire\PublicScoreboard;
+use App\Livewire\PublicScoreboardCreate;
 use App\Livewire\RegistrationPage;
 use App\Livewire\Scoreboard;
 use App\Livewire\TournamentIndex;
@@ -29,3 +31,7 @@ Route::get('/scoreboard/{gameMatch}', Scoreboard::class)->name('scoreboard.show'
 Route::get('/t/{code}/scoreboard/{gameMatch}', Scoreboard::class)->name('public.scoreboard');
 Route::get('/t/{code}', PublicBracket::class)->name('public.bracket');
 Route::get('/r/{code}', RegistrationPage::class)->name('registration.show');
+
+// Scoreboard publik standalone — tanpa turnamen & tanpa team
+Route::get('/s', PublicScoreboardCreate::class)->name('public.scoreboard.create');
+Route::get('/s/{code}', PublicScoreboard::class)->name('public.scoreboard.standalone');
