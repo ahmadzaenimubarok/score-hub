@@ -7,6 +7,9 @@ use Livewire\Component;
 
 class PublicScoreboard extends Component
 {
+    /** Satu scoreboard publik bersama — tanpa kode, tanpa intro. */
+    public const PUBLIC_CODE = 'PUBLIC';
+
     public PublicMatch $match;
     public array $scores = [0, 0];
     public array $gamesWon = [0, 0];
@@ -18,18 +21,33 @@ class PublicScoreboard extends Component
     public bool $showSwitchCourt = false;
     public bool $courtFlipped = false;
     public int $gamesToWin = 2;
-    public string $code = '';
 
-    public function mount(string $code)
+    public function mount()
     {
-        $this->match = PublicMatch::where('code', $code)->firstOrFail();
-        $this->code = $this->match->code;
-        $this->gamesToWin = $this->match->games_to_win;
+        $this->match = PublicMatch::firstOrCreate(
+            ['code' => self::PUBLIC_CODE],
+            ['name_a' => 'Tim 1', 'name_b' => 'Tim 2', 'games_to_win' => 2]
+        );
 
         if (!$this->match->games_detail) {
             $this->match->initGames();
         }
 
+        $this->gamesToWin = $this->match->games_to_win;
+        $this->refreshState();
+    }
+
+    public function resetBoard(): void
+    {
+        $this->match->name_a = 'Tim 1';
+        $this->match->name_b = 'Tim 2';
+        $this->match->games_to_win = 2;
+        $this->match->status = 'ongoing';
+        $this->match->winner_side = null;
+        $this->match->finished_at = null;
+        $this->match->initGames();
+
+        $this->showSwitchCourt = false;
         $this->refreshState();
     }
 
@@ -156,7 +174,7 @@ class PublicScoreboard extends Component
     {
         $this->refreshState();
 
-        return view('livewire.public-scoreboard', ['closeUrl' => '/s'])
-            ->layout('layouts.scoreboard', ['closeUrl' => '/s']);
+        return view('livewire.public-scoreboard')
+            ->layout('layouts.scoreboard');
     }
 }

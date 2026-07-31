@@ -58,17 +58,6 @@
     {{-- PANEL ATAS: Black — info, game status, games won            --}}
     {{-- ============================================================ --}}
     <div class="flex-none h-14 bg-black flex items-center gap-3 z-10 header-safe">
-        {{-- Back --}}
-        <a href="{{ $closeUrl ?? '' }}"
-           class="flex-none w-11 h-11 flex items-center justify-center
-                  bg-white/10 hover:bg-white/20 text-white/70 hover:text-white
-                  rounded-xl transition-all no-underline active:scale-95">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 12H5"/>
-                <path d="M12 19l-7-7 7-7"/>
-            </svg>
-        </a>
-
         {{-- Fullscreen --}}
         <button @click="toggleFullscreen()"
                 class="flex-none w-11 h-11 flex items-center justify-center
@@ -89,14 +78,24 @@
             </svg>
         </button>
 
+        {{-- Reset --}}
+        <button wire:click="resetBoard"
+                wire:confirm="Reset scoreboard? Semua skor akan hilang."
+                class="flex-none w-11 h-11 flex items-center justify-center
+                       bg-white/10 hover:bg-white/20 text-white/70 hover:text-white
+                       rounded-xl transition-all active:scale-95"
+                title="Reset scoreboard">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+            </svg>
+        </button>
+
         {{-- Spacer --}}
         <div class="flex-1"></div>
 
         {{-- Title --}}
-        <h1 class="text-xs sm:text-sm font-bold text-white/90 truncate max-w-[40vw] sm:max-w-none">🏸 Scoreboard</h1>
-        <span class="text-[10px] text-gray-500 hidden sm:inline whitespace-nowrap">
-            · Kode {{ $code }}
-        </span>
+        <h1 class="text-xs sm:text-sm font-bold text-white/90 truncate">🏸 Scoreboard</h1>
 
         {{-- Spacer --}}
         <div class="flex-1"></div>
