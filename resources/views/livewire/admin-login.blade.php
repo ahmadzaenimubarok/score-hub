@@ -3,7 +3,7 @@
         <div class="text-center">
             <div class="text-4xl mb-2">🏸</div>
             <h1 class="text-xl font-bold tracking-tight">Login Admin</h1>
-            <p class="text-sm text-gray-400 mt-1">Badminton Fun Match</p>
+            <p class="text-sm text-gray-400 mt-1">Skor Cast</p>
         </div>
 
         <div>

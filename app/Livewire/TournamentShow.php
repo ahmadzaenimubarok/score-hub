@@ -30,6 +30,9 @@ class TournamentShow extends Component
     public ?int $score1 = null;
     public ?int $score2 = null;
 
+    // Estimasi waktu
+    public int $estimateCourts = 1;
+
     #[Url(as: 'tab')]
     public string $tab = 'participants';
 
@@ -42,8 +45,7 @@ class TournamentShow extends Component
 
     public function addParticipant()
     {
-        if ($this->tournament->status !== 'draft') {
-            session()->flash('error', 'Peserta hanya bisa ditambahkan saat status draft.');
+        if (! $this->ensureStatus('Peserta hanya bisa ditambahkan saat status draft.', Tournament::STATUS_DRAFT)) {
             return;
         }
 
@@ -59,8 +61,7 @@ class TournamentShow extends Component
 
     public function removeParticipant($id)
     {
-        if ($this->tournament->status !== 'draft') {
-            session()->flash('error', 'Peserta hanya bisa dihapus saat status draft.');
+        if (! $this->ensureStatus('Peserta hanya bisa dihapus saat status draft.', Tournament::STATUS_DRAFT)) {
             return;
         }
 
@@ -72,8 +73,7 @@ class TournamentShow extends Component
 
     public function generateTeams()
     {
-        if ($this->tournament->status !== 'draft') {
-            session()->flash('error', 'Generate tim hanya bisa dilakukan saat status draft.');
+        if (! $this->ensureStatus('Generate tim hanya bisa dilakukan saat status draft.', Tournament::STATUS_DRAFT)) {
             return;
         }
 
@@ -112,8 +112,7 @@ class TournamentShow extends Component
 
     public function generateBracket()
     {
-        if ($this->tournament->status !== 'draft') {
-            session()->flash('error', 'Generate bracket hanya bisa dilakukan saat status draft.');
+        if (! $this->ensureStatus('Generate bracket hanya bisa dilakukan saat status draft.', Tournament::STATUS_DRAFT)) {
             return;
         }
 
@@ -236,8 +235,7 @@ class TournamentShow extends Component
 
     public function setGamesFormat(int $gamesToWin): void
     {
-        if ($this->tournament->status !== 'draft') {
-            session()->flash('error', 'Format hanya bisa diubah saat status draft.');
+        if (! $this->ensureStatus('Format hanya bisa diubah saat status draft.', Tournament::STATUS_DRAFT)) {
             return;
         }
         $this->tournament->update(['games_to_win' => $gamesToWin]);
@@ -247,8 +245,7 @@ class TournamentShow extends Component
 
     public function startMatch($matchId)
     {
-        if ($this->tournament->status !== 'ongoing') {
-            session()->flash('error', 'Mulai turnamen terlebih dahulu.');
+        if (! $this->ensureStatus('Mulai turnamen terlebih dahulu.', Tournament::STATUS_ONGOING)) {
             return;
         }
 
@@ -280,8 +277,7 @@ class TournamentShow extends Component
 
     public function saveScore()
     {
-        if ($this->tournament->status === 'archived') {
-            session()->flash('error', 'Turnamen sedang diarsipkan.');
+        if (! $this->ensureStatus('Skor hanya bisa diubah saat turnamen berjalan.', Tournament::STATUS_ONGOING)) {
             return;
         }
 
@@ -327,8 +323,24 @@ class TournamentShow extends Component
 
     public function startTournament()
     {
-        if ($this->tournament->status !== 'draft') {
-            session()->flash('error', 'Turnamen sudah dimulai.');
+        if (! $this->ensureStatus('Turnamen sudah dimulai.', Tournament::STATUS_DRAFT)) {
+            return;
+        }
+
+        if ($this->tournament->teams()->count() < 2) {
+            session()->flash('error', 'Buat tim dulu — minimal 2 tim sebelum turnamen dimulai.');
+            return;
+        }
+
+        $hasReadyMatch = $this->tournament->gameMatches()
+            ->where('round', 1)
+            ->whereNotNull('team1_id')
+            ->whereNotNull('team2_id')
+            ->where('status', 'pending')
+            ->exists();
+
+        if (! $hasReadyMatch) {
+            session()->flash('error', 'Generate bracket dulu — belum ada pertandingan yang siap dimainkan.');
             return;
         }
 
@@ -352,6 +364,10 @@ class TournamentShow extends Component
 
     public function resetTournament()
     {
+        if (! $this->ensureStatus('Turnamen yang diarsipkan tidak bisa direset.', Tournament::STATUS_DRAFT, Tournament::STATUS_ONGOING, Tournament::STATUS_COMPLETED)) {
+            return;
+        }
+
         $this->tournament->gameMatches()->delete();
         $this->tournament->teams()->delete();
         $this->tournament->update(['status' => 'draft', 'original_status' => null]);
@@ -381,6 +397,56 @@ class TournamentShow extends Component
         ]);
 
         $this->redirect(route('tournaments.index'));
+    }
+
+    // ========== STATE GUARD ==========
+
+    /**
+     * Estimasi total waktu pertandingan (single elimination).
+     * - Tim = peserta ÷ 2 (2 peserta = 1 tim)
+     * - Pertandingan = tim - 1 (bye auto-advance, tidak makan waktu)
+     * - Durasi per match: 1 game ±17 mnt, best of 3 ±35 mnt (level komunitas)
+     * - Plus ±5 mnt jeda antar pertandingan, dibagi jumlah lapangan
+     */
+    public function estimateSummary(): array
+    {
+        $teamsCount = $this->tournament->teams()->count();
+        if ($teamsCount < 2) {
+            $teamsCount = (int) ceil($this->tournament->participants()->count() / 2);
+        }
+
+        $matches = max($teamsCount - 1, 0);
+        $perMatch = $this->tournament->games_to_win === 1 ? 17 : 35;
+        $break = 5;
+        $courts = max($this->estimateCourts, 1);
+        $totalMinutes = (int) round($matches * ($perMatch + $break) / $courts);
+
+        return [
+            'teams' => $teamsCount,
+            'matches' => $matches,
+            'perMatch' => $perMatch,
+            'break' => $break,
+            'courts' => $courts,
+            'totalMinutes' => $totalMinutes,
+            'totalLabel' => $totalMinutes >= 60
+                ? '±' . intdiv($totalMinutes, 60) . ' jam ' . ($totalMinutes % 60) . ' menit'
+                : '±' . $totalMinutes . ' menit',
+            'formatLabel' => $this->tournament->games_to_win === 1 ? '1 Game' : 'Best of 3',
+        ];
+    }
+
+    /**
+     * Pastikan turnamen berada pada salah satu status yang diizinkan.
+     * Kalau tidak: flash error dan return false (aksi dibatalkan).
+     */
+    private function ensureStatus(string $message, string ...$allowed): bool
+    {
+        if (in_array($this->tournament->status, $allowed, true)) {
+            return true;
+        }
+
+        session()->flash('error', $message);
+        return false;
     }
 
     // ========== RENDER ==========
@@ -423,6 +489,7 @@ class TournamentShow extends Component
             'bracketRounds' => $bracketRounds,
             'bracketLayout' => $this->tab === 'bracket' ? $this->bracketLayout($this->tournament->gameMatches, cardH: 160) : [],
             'champion' => $champion,
+            'estimate' => $this->estimateSummary(),
         ]);
     }
 }

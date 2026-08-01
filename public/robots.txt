@@ -1,2 +1,9 @@
 User-agent: *
-Disallow:
+Allow: /
+
+Disallow: /admin
+Disallow: /login
+Disallow: /s
+Disallow: /s/*
+
+Sitemap: https://skorcast.online/sitemap.xml

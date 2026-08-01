@@ -3,7 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Badminton Fun Match — {{ $title ?? 'Admin' }}</title>
+    <title>Skor Cast — {{ $title ?? 'Admin' }}</title>
+    <meta name="robots" content="noindex, nofollow">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
@@ -13,12 +14,12 @@
             <div class="flex justify-between h-16">
                 <div class="flex items-center gap-4">
                     <a href="{{ route('tournaments.index') }}" class="text-xl font-bold tracking-tight">
-                        🏸 Fun Match
+                        🏸 Skor Cast
                     </a>
                     <span class="text-sm text-gray-400">Admin</span>
                 </div>
                 <div class="flex items-center gap-3 text-sm text-gray-400">
-                    <span class="hidden sm:inline">score.jawakoentji.my.id</span>
+                    <span class="hidden sm:inline">skorcast.online</span>
                     @auth
                         <span class="text-gray-500 hidden sm:inline">·</span>
                         <form method="POST" action="{{ url('/logout') }}" class="inline">
@@ -39,7 +40,7 @@
 
     <div class="text-center text-xs text-gray-700 py-6 border-t border-gray-800 mt-8">
         <a href="https://github.com/ahmadzaenimubarok/skorcast" target="_blank" class="hover:text-gray-500 transition-colors">🐙 GitHub</a>
-        &middot; Badminton Fun Match &middot; score.jawakoentji.my.id
+        &middot; Skor Cast &middot; skorcast.online
     </div>
 </body>
 </html>

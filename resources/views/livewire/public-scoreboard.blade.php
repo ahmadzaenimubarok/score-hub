@@ -95,7 +95,7 @@
         <div class="flex-1"></div>
 
         {{-- Title --}}
-        <h1 class="text-xs sm:text-sm font-bold text-white/90 truncate">🏸 Scoreboard</h1>
+        <h1 class="min-w-0 text-xs sm:text-sm font-bold text-white/90 truncate">🏸 Scoreboard</h1>
 
         {{-- Spacer --}}
         <div class="flex-1"></div>

@@ -32,11 +32,11 @@
             wire:model="newName"
             type="text"
             placeholder="Nama turnamen baru..."
-            class="flex-1 px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            class="flex-1 h-11 px-4 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
         >
         <button
             type="submit"
-            class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors"
+            class="px-6 h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors"
         >
             + Buat
         </button>
@@ -50,9 +50,9 @@
                 href="{{ route('tournaments.show', $t) }}"
                 class="block px-6 py-4 bg-gray-800 border border-gray-700 rounded-lg hover:border-gray-600 transition-colors group"
             >
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="text-lg font-semibold group-hover:text-emerald-400 transition-colors">{{ $t->name }}</h3>
+                <div class="flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                        <h3 class="text-lg font-semibold truncate group-hover:text-emerald-400 transition-colors">{{ $t->name }}</h3>
                         <p class="text-sm text-gray-500 mt-0.5">
                             {{ $t->participants_count ?? 0 }} peserta
                             &middot; {{ $t->teams_count ?? 0 }} tim
@@ -61,8 +61,8 @@
                             @endif
                         </p>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs px-2.5 py-1 rounded-full font-medium
+                    <div class="flex items-center gap-3 flex-none">
+                        <span class="text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap
                             @if($t->status === 'archived') bg-gray-700/50 text-gray-500 border border-gray-600
                             @elseif($t->status === 'draft') bg-gray-700 text-gray-400
                             @elseif($t->status === 'ongoing') bg-amber-900/50 text-amber-300 border border-amber-700

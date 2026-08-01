@@ -1,10 +1,10 @@
 <div>
     {{-- Header --}}
-    <div class="flex items-start justify-between mb-6">
-        <div>
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
+        <div class="min-w-0">
             <a href="{{ route('tournaments.index') }}" class="text-sm text-gray-500 hover:text-gray-300 mb-1 inline-block">&larr; Kembali</a>
-            <h1 class="text-3xl font-bold">{{ $tournament->name }}</h1>
-            <div class="flex items-center gap-3 mt-1">
+            <h1 class="text-3xl font-bold break-words">{{ $tournament->name }}</h1>
+            <div class="flex flex-wrap items-center gap-3 mt-1">
                 <span class="text-xs px-2.5 py-1 rounded-full font-medium
                     @if($tournament->status === 'archived') bg-gray-700/50 text-gray-500 border border-gray-600
                     @elseif($tournament->status === 'draft') bg-gray-700 text-gray-400
@@ -28,7 +28,7 @@
                 @endif
             </div>
         </div>
-        <div class="flex gap-2"
+        <div class="flex flex-wrap gap-2"
              x-data="{ copied: false }">
             <button x-data="{ shared: false }" @click="
                 const url = '{{ route('registration.show', $tournament->code) }}';
@@ -44,7 +44,7 @@
                     setTimeout(() => shared = false, 2000);
                 }
             "
-                    class="flex items-center gap-2 px-3 h-9 bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-300 border border-emerald-800 rounded-lg transition-colors"
+                    class="flex items-center gap-2 px-4 h-11 bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-300 border border-emerald-800 rounded-lg transition-colors"
                     :title="shared ? 'Tersalin!' : 'Bagikan halaman pendaftaran'">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
@@ -59,7 +59,7 @@
                 copied = true;
                 setTimeout(() => copied = false, 2000);
             "
-                    class="relative w-9 h-9 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
+                    class="relative w-11 h-11 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
                     :title="copied ? 'Tersalin!' : 'Salin tautan publik'">
                 <svg x-show="!copied" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="18" cy="5" r="3"/>
@@ -73,21 +73,21 @@
                 </svg>
             </button>
             @if($tournament->status === 'draft' && $tournament->teams->count() >= 2 && $tournament->gameMatches->count() > 0)
-                <button wire:click="startTournament" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
+                <button wire:click="startTournament" class="px-4 h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
                     Mulai Turnamen
                 </button>
             @endif
             @if($tournament->status !== 'draft' && $tournament->status !== 'archived')
-                <button wire:click="resetTournament" wire:confirm="Reset turnamen? Semua data pertandingan akan hilang." class="px-4 py-2 bg-red-900/50 hover:bg-red-800 text-red-300 border border-red-800 rounded-lg transition-colors text-sm">
+                <button wire:click="resetTournament" wire:confirm="Reset turnamen? Semua data pertandingan akan hilang." class="px-4 h-11 bg-red-900/50 hover:bg-red-800 text-red-300 border border-red-800 rounded-lg transition-colors text-sm">
                     Reset
                 </button>
             @endif
             @if($tournament->status === 'archived')
-                <button wire:click="unarchiveTournament" wire:confirm="Kembalikan turnamen?" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
+                <button wire:click="unarchiveTournament" wire:confirm="Kembalikan turnamen?" class="px-4 h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
                     Kembalikan
                 </button>
             @else
-                <button wire:click="archiveTournament" wire:confirm="Arsipkan turnamen?" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600 rounded-lg transition-colors text-sm">
+                <button wire:click="archiveTournament" wire:confirm="Arsipkan turnamen?" class="px-4 h-11 bg-gray-700 hover:bg-gray-600 text-gray-300 border border-gray-600 rounded-lg transition-colors text-sm">
                     Arsipkan
                 </button>
             @endif
@@ -121,7 +121,7 @@
             Bracket
         </button>
         <a href="{{ route('public.bracket', $tournament->code) }}" target="_blank"
-           class="flex-none w-9 h-9 flex items-center justify-center text-gray-500 hover:text-gray-300 hover:bg-gray-800 rounded-lg transition-colors ml-auto"
+           class="flex-none w-11 h-11 flex items-center justify-center text-gray-500 hover:text-gray-300 hover:bg-gray-800 rounded-lg transition-colors ml-auto"
            title="Tampilan Publik">
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
@@ -134,15 +134,42 @@
     {{-- Tab: Participants --}}
     @if($tab === 'participants')
         <div>
+            {{-- Estimasi waktu pertandingan --}}
+            <div class="mb-6 rounded-xl border border-gray-700 bg-gray-800/40 p-4 sm:p-5">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-semibold tracking-wider text-gray-500 uppercase">Estimasi total permainan</p>
+                        <p class="mt-1 text-2xl sm:text-3xl font-bold text-emerald-400">{{ $estimate['totalLabel'] }}</p>
+                        <p class="mt-1 text-sm text-gray-400">
+                            {{ $estimate['teams'] }} tim · {{ $estimate['matches'] }} pertandingan · format {{ $estimate['formatLabel'] }}
+                        </p>
+                    </div>
+                    <div class="flex flex-col gap-1.5 items-start sm:items-end">
+                        <label class="text-xs text-gray-500">Jumlah lapangan</label>
+                        <select wire:model.live="estimateCourts" class="bg-gray-800 text-gray-200 border border-gray-700 rounded-lg px-3 py-2 text-sm">
+                            @foreach([1, 2, 3, 4] as $n)
+                                <option value="{{ $n }}">{{ $n }} lapangan</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <p class="mt-3 text-xs text-gray-600">
+                    ≈{{ $estimate['perMatch'] }} menit/pertandingan (termasuk ±{{ $estimate['break'] }} menit jeda) · bye langsung maju tanpa main
+                </p>
+                @if($estimate['teams'] < 2)
+                    <p class="mt-2 text-xs text-amber-500/90">Tambahkan minimal 2 peserta untuk melihat estimasi.</p>
+                @endif
+            </div>
+
             @if($tournament->status === 'draft')
                 <form wire:submit="addParticipant" class="flex gap-3 mb-6">
                     <input
                         wire:model="participantName"
                         type="text"
                         placeholder="Nama peserta..."
-                        class="flex-1 px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        class="flex-1 h-11 px-4 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     >
-                    <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
+                    <button type="submit" class="px-5 h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
                         + Tambah
                     </button>
                 </form>
@@ -173,7 +200,7 @@
     @if($tab === 'teams')
         <div>
             @if($tournament->participants->count() >= 2 && $tournament->status === 'draft')
-                <button wire:click="generateTeams" class="mb-6 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
+                <button wire:click="generateTeams" class="mb-6 h-11 px-5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
                     🔄 Generate Tim (acak)
                 </button>
             @elseif($tournament->participants->count() < 2)
@@ -181,7 +208,7 @@
             @endif
 
             @if(($tournament->teams->count() > 0 || $tournament->gameMatches->count() > 0) && $tournament->status === 'draft')
-                <button wire:click="generateBracket" class="mb-6 ml-3 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors text-sm">
+                <button wire:click="generateBracket" class="mb-6 ml-3 h-11 px-5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-700 font-medium rounded-lg transition-colors text-sm">
                     🏆 Generate Bracket
                 </button>
             @endif
@@ -235,7 +262,7 @@
                                          style="top: {{ $bracketLayout['tops'][$match->id] }}px; height: {{ $bracketLayout['cardH'] }}px;">
                                         {{-- Team 1 --}}
                                         <div class="flex items-center justify-between {{ $match->isTeam1Winner() ? 'text-emerald-400 font-semibold' : ($match->team1 ? 'text-gray-200' : 'text-gray-600') }}">
-                                            <span class="text-sm truncate">
+                                            <span class="text-sm truncate min-w-0 flex-1">
                                                 @if($match->team1)
                                                     {{ $match->team1->name }}
                                                     @if($match->team1->members->isNotEmpty())
@@ -247,13 +274,13 @@
                                                     —
                                                 @endif
                                             </span>
-                                            <span class="text-sm font-mono ml-2">{{ $match->status !== 'pending' ? $match->score1 : '' }}</span>
+                                            <span class="text-sm font-mono ml-2 flex-none">{{ $match->status !== 'pending' ? $match->score1 : '' }}</span>
                                         </div>
                                         {{-- VS --}}
                                         <div class="text-xs text-gray-600 my-1 text-center">VS</div>
                                         {{-- Team 2 --}}
                                         <div class="flex items-center justify-between {{ $match->isTeam2Winner() ? 'text-emerald-400 font-semibold' : ($match->team2 ? 'text-gray-200' : 'text-gray-600') }}">
-                                            <span class="text-sm truncate">
+                                            <span class="text-sm truncate min-w-0 flex-1">
                                                 @if($match->team2)
                                                     {{ $match->team2->name }}
                                                     @if($match->team2->members->isNotEmpty())
@@ -265,20 +292,21 @@
                                                     —
                                                 @endif
                                             </span>
-                                            <span class="text-sm font-mono ml-2">{{ $match->status !== 'pending' ? $match->score2 : '' }}</span>
+                                            <span class="text-sm font-mono ml-2 flex-none">{{ $match->status !== 'pending' ? $match->score2 : '' }}</span>
                                         </div>
 
                                         {{-- Actions --}}
                                         @if($match->status === 'pending' && $match->team1_id && $match->team2_id && $tournament->status === 'ongoing')
-                                            <button wire:click="startMatch({{ $match->id }})" class="mt-2 w-full text-xs py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded transition-colors">
+                                            <button wire:click="startMatch({{ $match->id }})" class="mt-2 w-full h-10 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors">
                                                 Mulai
                                             </button>
                                         @endif
 
                                         @if($match->status === 'ongoing')
                                             <a href="{{ route('scoreboard.show', $match->id) }}"
-                                               class="block mt-2 w-full text-xs py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors text-center">
-                                                🏸 Scoreboard
+                                               class="block mt-2 w-full h-10 flex items-center justify-center gap-1.5 text-sm font-medium bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-700/60 rounded-lg transition-colors">
+                                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                                Scoreboard
                                             </a>
                                         @endif
 
@@ -307,8 +335,8 @@
                                                     </div>
                                                 </div>
                                                 <div class="flex gap-2">
-                                                    <button wire:click="saveScore" class="flex-1 text-xs py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded">Simpan</button>
-                                                    <button wire:click="cancelEdit" class="flex-1 text-xs py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded">Batal</button>
+                                                    <button wire:click="saveScore" class="flex-1 h-10 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg">Simpan</button>
+                                                    <button wire:click="cancelEdit" class="flex-1 h-10 text-sm font-medium bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg">Batal</button>
                                                 </div>
                                             </div>
                                         @endif

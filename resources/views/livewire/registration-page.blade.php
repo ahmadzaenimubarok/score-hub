@@ -2,7 +2,7 @@
     {{-- Header Card --}}
     <div class="bg-gray-900 rounded-2xl border border-gray-800 p-6 text-center">
         <div class="text-4xl mb-2">🏸</div>
-        <h1 class="text-2xl font-bold tracking-tight">{{ $tournament->name }}</h1>
+        <h1 class="text-2xl font-bold tracking-tight break-words">{{ $tournament->name }}</h1>
         <div class="mt-3 flex items-center justify-center gap-2">
             <span class="text-xs px-3 py-1 rounded-full font-medium
                 @if($tournament->status === 'draft') bg-emerald-900/50 text-emerald-300 border border-emerald-700
@@ -90,6 +90,6 @@
     </div>
 
     <p class="text-center text-xs text-gray-700 mt-6">
-        🏸 Badminton Fun Match &middot; score.jawakoentji.my.id
+        🏸 Skor Cast &middot; skorcast.online
     </p>
 </div>

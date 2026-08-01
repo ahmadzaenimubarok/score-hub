@@ -1,7 +1,7 @@
 <div>
     {{-- Header --}}
     <div class="text-center mb-8 mt-4">
-        <h1 class="text-4xl font-bold tracking-tight">🏸 {{ $tournament->name }}</h1>
+        <h1 class="text-4xl font-bold tracking-tight break-words">🏸 {{ $tournament->name }}</h1>
         <div class="mt-2 flex items-center justify-center gap-3">
             <span class="text-xs px-2.5 py-1 rounded-full font-medium
                 @if($tournament->status === 'draft') bg-gray-700 text-gray-400
@@ -24,7 +24,7 @@
     @if($champion)
         <div class="text-center mb-8 p-6 bg-gradient-to-r from-amber-900/30 via-emerald-900/30 to-amber-900/30 border border-amber-700/50 rounded-2xl">
             <p class="text-sm text-amber-400 uppercase tracking-widest mb-1">Juara</p>
-            <h2 class="text-3xl font-bold text-emerald-300">🏆 {{ $champion->name }}</h2>
+            <h2 class="text-3xl font-bold text-emerald-300 break-words">🏆 {{ $champion->name }}</h2>
         </div>
     @endif
 
@@ -54,7 +54,7 @@
                                  style="top: {{ $bracketLayout['tops'][$match->id] }}px; height: {{ $bracketLayout['cardH'] }}px;">
                                 {{-- Team 1 --}}
                                 <div class="flex items-center justify-between {{ $match->isTeam1Winner() ? 'text-emerald-400 font-semibold' : ($match->team1 ? 'text-gray-300' : 'text-gray-700') }}">
-                                    <span class="text-sm truncate">
+                                    <span class="text-sm truncate min-w-0 flex-1">
                                         @if($match->team1)
                                             {{ $match->team1->name }}
                                             @if($match->team1->members->isNotEmpty())
@@ -66,13 +66,13 @@
                                             —
                                         @endif
                                     </span>
-                                    <span class="text-sm font-mono ml-2">{{ $match->status !== 'pending' ? $match->score1 : '' }}</span>
+                                    <span class="text-sm font-mono ml-2 flex-none">{{ $match->status !== 'pending' ? $match->score1 : '' }}</span>
                                 </div>
                                 {{-- VS --}}
                                 <div class="text-xs text-gray-700 my-1 text-center">VS</div>
                                 {{-- Team 2 --}}
                                 <div class="flex items-center justify-between {{ $match->isTeam2Winner() ? 'text-emerald-400 font-semibold' : ($match->team2 ? 'text-gray-300' : 'text-gray-700') }}">
-                                    <span class="text-sm truncate">
+                                    <span class="text-sm truncate min-w-0 flex-1">
                                         @if($match->team2)
                                             {{ $match->team2->name }}
                                             @if($match->team2->members->isNotEmpty())
@@ -84,12 +84,13 @@
                                             —
                                         @endif
                                     </span>
-                                    <span class="text-sm font-mono ml-2">{{ $match->status !== 'pending' ? $match->score2 : '' }}</span>
+                                    <span class="text-sm font-mono ml-2 flex-none">{{ $match->status !== 'pending' ? $match->score2 : '' }}</span>
                                 </div>
                                 @if($match->status === 'ongoing')
                                     <a href="{{ route('public.scoreboard', ['code' => $tournament->code, 'gameMatch' => $match->id]) }}"
-                                       class="block mt-2 text-xs py-1 bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 rounded text-center transition-colors">
-                                        🏸 Scoreboard
+                                       class="block mt-2 w-full h-10 flex items-center justify-center gap-1.5 text-sm font-medium bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-700/60 rounded-lg transition-colors">
+                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                        Scoreboard
                                     </a>
                                 @endif
                                 @if($match->status === 'completed' && $match->winner)
@@ -129,7 +130,7 @@
 
     <div class="text-center text-xs text-gray-700 mt-8 pb-8">
         <a href="https://github.com/ahmadzaenimubarok/skorcast" target="_blank" class="hover:text-gray-500 transition-colors">🐙 GitHub</a>
-        &middot; Badminton Fun Match &middot; score.jawakoentji.my.id
+        &middot; Skor Cast &middot; skorcast.online
     </div>
 
     {{-- Livewire polling — live selama ada match yg berjalan --}}
