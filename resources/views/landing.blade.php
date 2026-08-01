@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Score Hub — Skor badminton, tampil live</title>
-    <meta name="description" content="Score Hub menampilkan skor badminton real-time di layar. Buka link, langsung main — tanpa aplikasi, tanpa akun. Turnamen dengan bracket otomatis.">
+    <title>Score Cast — Skor badminton, tampil live</title>
+    <meta name="description" content="Score Cast menampilkan skor badminton real-time di layar. Buka link, langsung main — tanpa aplikasi, tanpa akun. Turnamen dengan bracket otomatis.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet">
@@ -56,7 +56,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
                     <span class="text-[#4ADE80]">tampil live.</span>
                 </h1>
                 <p class="mt-6 text-[#9FB0A6] text-base sm:text-lg leading-relaxed max-w-[46ch]">
-                    Score Hub menampilkan skor badminton real-time di layar. Cukup buka link dari HP, langsung main — tanpa aplikasi, tanpa akun.
+                    Score Cast menampilkan skor badminton real-time di layar. Cukup buka link dari HP, langsung main — tanpa aplikasi, tanpa akun.
                 </p>
                 <div class="mt-8 flex flex-col sm:flex-row gap-3">
                     <a href="/s"
@@ -136,7 +136,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
     {{-- FITUR --}}
     <section class="max-w-6xl mx-auto px-5 sm:px-8 py-14 sm:py-20 border-t border-white/5">
-        <h2 class="font-display text-2xl sm:text-4xl tracking-[-0.02em]">Kenapa Score Hub.</h2>
+        <h2 class="font-display text-2xl sm:text-4xl tracking-[-0.02em]">Kenapa Score Cast.</h2>
         <div class="mt-10 grid sm:grid-cols-2 gap-y-10 gap-x-14">
             <div class="border-t border-white/8 pt-6">
                 <h3 class="text-lg font-bold">Satu link, semua lihat</h3>
@@ -199,7 +199,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     </section>
 
     <footer class="max-w-6xl mx-auto px-5 sm:px-8 pb-10 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[#6B7C72]">
-        <span>Score Hub · Badminton Fun Match</span>
+        <span>Score Cast · Badminton Fun Match</span>
         <span>dibuat oleh Ahmad Zaeni Mubarok</span>
     </footer>
 

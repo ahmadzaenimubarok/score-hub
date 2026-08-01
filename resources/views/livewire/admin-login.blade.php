@@ -12,7 +12,7 @@
                    class="w-full rounded-xl bg-gray-900 border border-gray-700 px-4 py-3 text-gray-100
                           placeholder-gray-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30
                           focus:outline-none transition-colors"
-                   placeholder="admin@scorehub.my.id">
+                   placeholder="admin@skorcast.online">
             @error('email')
                 <p class="text-red-400 text-xs mt-1.5">{{ $message }}</p>
             @enderror

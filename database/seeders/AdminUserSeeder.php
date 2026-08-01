@@ -19,7 +19,7 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        $email = env('ADMIN_EMAIL', 'admin@scorehub.my.id');
+        $email = env('ADMIN_EMAIL', 'admin@skorcast.online');
         $password = env('ADMIN_PASSWORD', Str::random(16));
 
         User::updateOrCreate(
