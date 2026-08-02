@@ -162,25 +162,63 @@
             </div>
 
             @if($tournament->status === 'draft')
-                <form wire:submit="addParticipant" class="flex gap-3 mb-6">
-                    <input
-                        wire:model="participantName"
-                        type="text"
-                        placeholder="Nama peserta..."
-                        class="flex-1 h-11 px-4 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    >
-                    <button type="submit" class="px-5 h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
-                        + Tambah
-                    </button>
+                {{-- Progress kuota --}}
+                @if($tournament->max_participants)
+                    <div class="mb-4 flex items-center gap-3">
+                        <div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+                            <div class="h-full bg-emerald-600 rounded-full transition-all"
+                                 style="width: {{ min(100, ($tournament->participants->count() / $tournament->max_participants) * 100) }}%"></div>
+                        </div>
+                        <span class="text-sm text-gray-400 flex-none">
+                            {{ $tournament->participants->count() }}/{{ $tournament->max_participants }} peserta
+                        </span>
+                    </div>
+                    @if($tournament->participants->count() >= $tournament->max_participants)
+                        <div class="mb-4 px-4 py-3 bg-amber-900/40 border border-amber-700/60 rounded-lg text-amber-200 text-sm">
+                            Kuota sudah penuh ({{ $tournament->max_participants }} peserta). Pendaftaran ditutup.
+                        </div>
+                    @endif
+                @endif
+
+                @if(!$tournament->max_participants || $tournament->participants->count() < $tournament->max_participants)
+                <form wire:submit="addParticipant" class="mb-6">
+                    <div class="flex gap-3">
+                        <input
+                            wire:model="participantName"
+                            type="text"
+                            placeholder="Nama peserta..."
+                            class="flex-1 h-11 px-4 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        >
+                        @if($tournament->use_groups)
+                            <select wire:model="participantGroup" class="h-11 bg-gray-800 text-gray-200 border border-gray-700 rounded-lg px-3 text-sm">
+                                <option value="">Kelompok...</option>
+                                @foreach($tournament->groupOptions() as $key => $label)
+                                    <option value="{{ $key }}">{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        @endif
+                        <button type="submit" class="px-5 h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
+                            + Tambah
+                        </button>
+                    </div>
+                    @if($tournament->use_groups && $tournament->groupCapacity())
+                        <p class="mt-2 text-xs text-gray-500">Kuota per kelompok: maksimal {{ $tournament->groupCapacity() }} peserta ({{ $tournament->group_count }} kelompok × rata).</p>
+                    @endif
                 </form>
+                @endif
             @endif
 
             <div class="space-y-2">
                 @forelse ($tournament->participants as $p)
                     <div class="flex items-center justify-between px-4 py-3 bg-gray-800/50 rounded-lg">
-                        <span>{{ $p->name }}</span>
+                        <span class="flex items-center gap-2 min-w-0">
+                            <span class="truncate">{{ $p->name }}</span>
+                            @if($p->group_name)
+                                <span class="flex-none text-[10px] px-2 py-0.5 rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-800 font-medium">{{ $p->group_name }}</span>
+                            @endif
+                        </span>
                         @if($tournament->status === 'draft')
-                            <button wire:click="removeParticipant({{ $p->id }})" wire:confirm="Hapus {{ $p->name }}?" class="text-red-500 hover:text-red-400 text-sm">
+                            <button wire:click="removeParticipant({{ $p->id }})" wire:confirm="Hapus {{ $p->name }}?" class="text-red-500 hover:text-red-400 text-sm flex-none">
                                 Hapus
                             </button>
                         @endif
@@ -247,8 +285,7 @@
                             <div class="absolute top-0 flex items-center justify-center"
                                  style="left: {{ $bracketLayout['roundLeft'][$round] }}px; width: 224px; height: {{ $bracketLayout['headerH'] }}px;">
                                 <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider text-center">
-                                    Ronde {{ $round }}
-                                    @if($loop->last)<span class="text-emerald-400 ml-2">(Final)</span>@endif
+                                    {{ $bracketLayout['roundNames'][$round] ?? ('Ronde ' . $round) }}
                                 </h3>
                             </div>
                         @endforeach

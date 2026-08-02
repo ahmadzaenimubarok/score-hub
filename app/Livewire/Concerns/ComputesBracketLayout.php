@@ -162,8 +162,20 @@ trait ComputesBracketLayout
             }
         }
 
+        // Nama babak: dihitung dari posisi terhadap Final (akhir).
+        // 3 ronde → Perempat Final, Semifinal, Final. 4 ronde → 16 Besar, Perempat Final, Semifinal, Final.
+        $stageNames = ['Final', 'Semifinal', 'Perempat Final', '16 Besar', '32 Besar', '64 Besar', '128 Besar'];
+        $roundNames = [];
+        $visibleKeys = array_keys($visibleRounds);
+        $visibleTotal = count($visibleKeys);
+        foreach ($visibleKeys as $idx => $r) {
+            $fromEnd = $visibleTotal - 1 - $idx;
+            $roundNames[$r] = $stageNames[$fromEnd] ?? ('Ronde ' . ($idx + 1));
+        }
+
         return [
             'rounds' => $visibleRounds,
+            'roundNames' => $roundNames,
             'roundLeft' => $roundLeft,
             'tops' => $tops,
             'lines' => $lines,

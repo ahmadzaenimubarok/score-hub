@@ -24,6 +24,7 @@ class TournamentShow extends Component
 
     // Participant management
     public string $participantName = '';
+    public ?int $participantGroup = null;
 
     // Score update
     public ?int $updatingMatchId = null;
@@ -51,11 +52,44 @@ class TournamentShow extends Component
 
         $this->validate(['participantName' => 'required|string|max:255']);
 
+        // Kuota total maksimal peserta
+        $max = $this->tournament->max_participants;
+        if ($max && $this->tournament->participants()->count() >= $max) {
+            session()->flash('error', "Kuota penuh: maksimal {$max} peserta.");
+            return;
+        }
+
+        $groupName = null;
+        if ($this->tournament->use_groups) {
+            $capacity = $this->tournament->groupCapacity();
+            if (! $this->participantGroup) {
+                session()->flash('error', 'Pilih kelompok peserta.');
+                return;
+            }
+            $options = $this->tournament->groupOptions();
+            if (! isset($options[$this->participantGroup])) {
+                session()->flash('error', 'Kelompok tidak valid.');
+                return;
+            }
+            $groupName = $options[$this->participantGroup];
+
+            // Kuota per kelompok (rata)
+            if ($capacity) {
+                $groupCount = $this->tournament->participants()->where('group_name', $groupName)->count();
+                if ($groupCount >= $capacity) {
+                    session()->flash('error', "{$groupName} sudah penuh (maksimal {$capacity} peserta).");
+                    return;
+                }
+            }
+        }
+
         $this->tournament->participants()->create([
             'name' => $this->participantName,
+            'group_name' => $groupName,
         ]);
 
         $this->participantName = '';
+        $this->participantGroup = null;
         $this->tournament->load('participants');
     }
 

@@ -39,7 +39,7 @@
                     <div class="absolute top-0 flex items-center justify-center"
                          style="left: {{ $bracketLayout['roundLeft'][$round] }}px; width: 224px; height: {{ $bracketLayout['headerH'] }}px;">
                         <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider text-center">
-                            Ronde {{ $round }}
+                            {{ $bracketLayout['roundNames'][$round] ?? ('Ronde ' . $round) }}
                             @if($loop->last)<span class="text-emerald-500 ml-1">🏆</span>@endif
                         </h3>
                     </div>

@@ -48,8 +48,30 @@
 
     {{-- Registration Form --}}
     @if($tournament->status === 'draft')
+        @php
+            $registrationFull = $tournament->max_participants && $tournament->participants->count() >= $tournament->max_participants;
+        @endphp
         <div class="mt-4 bg-gray-900 rounded-2xl border border-gray-800 p-6">
             <h2 class="font-semibold text-lg mb-1">Daftar Sekarang</h2>
+
+            {{-- Progress kuota --}}
+            @if($tournament->max_participants)
+                <div class="mb-4 flex items-center gap-3">
+                    <div class="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-emerald-600 rounded-full transition-all"
+                             style="width: {{ min(100, ($tournament->participants->count() / $tournament->max_participants) * 100) }}%"></div>
+                    </div>
+                    <span class="text-sm text-gray-400 flex-none">{{ $tournament->participants->count() }}/{{ $tournament->max_participants }} terdaftar</span>
+                </div>
+            @endif
+
+            @if($registrationFull)
+                <div class="text-center py-4">
+                    <p class="text-3xl mb-2">🈵</p>
+                    <p class="font-medium">Kuota sudah penuh</p>
+                    <p class="text-sm text-gray-500 mt-1">Mohon maaf, pendaftaran ditutup karena kuota penuh.</p>
+                </div>
+            @else
             <p class="text-sm text-gray-500 mb-4">Masukkan nama kamu, lalu tekan daftar.</p>
             <form wire:submit="register" class="flex flex-col gap-3">
                 <input
@@ -59,12 +81,27 @@
                     autocomplete="name"
                     class="w-full px-4 py-3.5 bg-gray-800 border border-gray-700 rounded-xl text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base"
                 >
+                @if($tournament->use_groups)
+                    <select wire:model="group" class="w-full px-4 py-3.5 bg-gray-800 border border-gray-700 rounded-xl text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base">
+                        <option value="">Pilih kelompok...</option>
+                        @foreach($tournament->groupOptions() as $key => $label)
+                            @php
+                                $filled = $tournament->participants->where('group_name', $label)->count();
+                                $cap = $tournament->groupCapacity();
+                            @endphp
+                            <option value="{{ $key }}" @if($cap && $filled >= $cap) disabled @endif>
+                                {{ $label }}@if($cap) ({{ $filled }}/{{ $cap }})@endif
+                            </option>
+                        @endforeach
+                    </select>
+                @endif
                 @error('name') <span class="text-xs text-red-400 -mt-1">{{ $message }}</span> @enderror
                 <button type="submit"
                         class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-semibold rounded-xl transition-all text-base">
                     Daftar
                 </button>
             </form>
+            @endif
         </div>
     @else
         <div class="mt-4 bg-gray-900 rounded-2xl border border-gray-800 p-6 text-center">

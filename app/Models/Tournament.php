@@ -21,11 +21,12 @@ class Tournament extends Model
         self::STATUS_ARCHIVED,
     ];
 
-    protected $fillable = ['name', 'code', 'status', 'original_status', 'games_to_win'];
+    protected $fillable = ['name', 'code', 'status', 'original_status', 'games_to_win', 'max_participants', 'use_groups', 'group_count', 'group_names'];
 
     protected $attributes = [
         'status' => 'draft',
         'games_to_win' => 2,
+        'use_groups' => false,
     ];
 
     protected function casts(): array
@@ -33,6 +34,10 @@ class Tournament extends Model
         return [
             'status' => 'string',
             'games_to_win' => 'integer',
+            'max_participants' => 'integer',
+            'use_groups' => 'boolean',
+            'group_count' => 'integer',
+            'group_names' => 'array',
         ];
     }
 
@@ -70,5 +75,33 @@ class Tournament extends Model
             self::STATUS_ARCHIVED => 'Diarsipkan',
             default => ucfirst((string) $this->status),
         };
+    }
+
+    /** Kuota peserta per kelompok (dibagi rata, pembulatan ke atas). Null kalau kelompok nonaktif. */
+    public function groupCapacity(): ?int
+    {
+        if (! $this->use_groups || ! $this->group_count || $this->group_count < 1) {
+            return null;
+        }
+
+        if (! $this->max_participants) {
+            return null; // tanpa batas total → tidak ada kuota per kelompok
+        }
+
+        return (int) ceil($this->max_participants / $this->group_count);
+    }
+
+    /** Daftar nama kelompok: nama custom (bila diisi) atau fallback "Kelompok 1..N". */
+    public function groupOptions(): array
+    {
+        $options = [];
+        if ($this->use_groups && $this->group_count) {
+            $names = $this->group_names ?? [];
+            for ($i = 1; $i <= $this->group_count; $i++) {
+                $options[$i] = ! empty($names[$i - 1]) ? $names[$i - 1] : 'Kelompok ' . $i;
+            }
+        }
+
+        return $options;
     }
 }

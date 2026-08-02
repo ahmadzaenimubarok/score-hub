@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Participant extends Model
 {
-    protected $fillable = ['tournament_id', 'name'];
+    protected $fillable = ['tournament_id', 'name', 'group_name'];
 
     public function tournament(): BelongsTo
     {
