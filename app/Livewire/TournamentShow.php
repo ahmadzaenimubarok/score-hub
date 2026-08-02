@@ -121,18 +121,27 @@ class TournamentShow extends Component
         // Hapus tim yang sudah ada
         $this->tournament->teams()->delete();
 
-        $shuffled = $participants->shuffle();
-        $teamNumber = 1;
+        // Saat kelompok aktif: usahakan peserta sekelompok TIDAK satu tim
+        if ($this->tournament->use_groups) {
+            $pairs = $this->pairAvoidingSameGroup($participants);
+        } else {
+            $shuffled = $participants->shuffle();
+            $pairs = [];
+            for ($i = 0; $i < $shuffled->count(); $i += 2) {
+                $pairs[] = [$shuffled[$i], $shuffled[$i + 1] ?? null];
+            }
+        }
 
-        for ($i = 0; $i < $shuffled->count(); $i += 2) {
+        $teamNumber = 1;
+        foreach ($pairs as [$first, $second]) {
             $team = $this->tournament->teams()->create([
                 'name' => 'Tim ' . $teamNumber,
             ]);
 
-            $team->members()->attach($shuffled[$i]->id);
+            $team->members()->attach($first->id);
 
-            if (isset($shuffled[$i + 1])) {
-                $team->members()->attach($shuffled[$i + 1]->id);
+            if ($second) {
+                $team->members()->attach($second->id);
             }
 
             $teamNumber++;
@@ -140,6 +149,53 @@ class TournamentShow extends Component
 
         $this->tournament->load('teams.members');
         session()->flash('message', 'Tim berhasil digenerate!');
+    }
+
+    /**
+     * Bangun pasangan tim agar peserta dari kelompok yang sama
+     * TIDAK berada di satu tim — selama masih ada kelompok lain.
+     *
+     * Strategi greedy: setiap kali ambil peserta dari kelompok terbesar,
+     * pasang dengan peserta dari kelompok LAIN terbesar. Kalau semua sisa
+     * peserta satu kelompok (tidak ada pilihan lain), baru dipasangkan
+     * satu tim — itu tak terhindarkan.
+     *
+     * @return array<int, array{0: Participant, 1: Participant|null}>
+     */
+    private function pairAvoidingSameGroup(Collection $participants): array
+    {
+        // Kelompokkan, acak urutan dalam tiap kelompok (variasi), urut terbesar dulu
+        $groups = $participants
+            ->groupBy(fn ($p) => $p->group_name ?? '')
+            ->map(fn ($g) => $g->values()->shuffle())
+            ->sortByDesc(fn ($g) => $g->count());
+
+        $teams = [];
+
+        while ($groups->filter->isNotEmpty()->isNotEmpty()) {
+            // Peserta 1: dari kelompok terbesar yang masih ada
+            $largest = $groups->sortByDesc(fn ($g) => $g->count())->first(fn ($g) => $g->isNotEmpty());
+            $first = $largest->shift();
+
+            // Peserta 2: dari kelompok LAIN terbesar (kalau ada);
+            // kalau tidak ada, pasangkan dari kelompok yang sama (tak terhindarkan)
+            $other = $groups
+                ->filter(fn ($g) => $g->isNotEmpty() && $g !== $largest)
+                ->sortByDesc(fn ($g) => $g->count())
+                ->first();
+
+            if ($other) {
+                $second = $other->shift();
+            } elseif ($largest->isNotEmpty()) {
+                $second = $largest->shift();
+            } else {
+                $second = null;
+            }
+
+            $teams[] = [$first, $second];
+        }
+
+        return $teams;
     }
 
     // ========== BRACKET ==========
