@@ -105,7 +105,7 @@ class TournamentShow extends Component
 
     // ========== TEAMS ==========
 
-    public function generateTeams()
+    public function generateTeams(string $mode = 'auto')
     {
         if (! $this->ensureStatus('Generate tim hanya bisa dilakukan saat status draft.', Tournament::STATUS_DRAFT)) {
             return;
@@ -118,59 +118,66 @@ class TournamentShow extends Component
             return;
         }
 
-        // Hapus tim yang sudah ada
+        // Hapus bracket lama dulu, lalu tim — kalau hanya hapus tim,
+        // match di bracket tetap ada dengan referensi team_id yang di-null-kan
+        // (nullOnDelete) → kartu bracket jadi "—" kosong.
+        $this->tournament->gameMatches()->delete();
         $this->tournament->teams()->delete();
 
-        // Saat kelompok aktif: usahakan peserta sekelompok TIDAK satu tim
-        if ($this->tournament->use_groups) {
-            $pairs = $this->pairAvoidingSameGroup($participants);
+        $groupsActive = $this->tournament->use_groups;
+        $label = 'acak';
+
+        if ($mode === 'byGroup' && $groupsActive) {
+            // Real: kelompok = tim
+            $this->generateTeamsFromGroups($participants);
+            $label = 'per kelompok';
+        } elseif ($groupsActive) {
+            // Fun dengan kelompok: acak, usahakan beda kelompok
+            $this->generateRandomTeamsAvoidingGroups($participants);
+            $label = 'acak (campur kelompok)';
         } else {
-            $shuffled = $participants->shuffle();
-            $pairs = [];
-            for ($i = 0; $i < $shuffled->count(); $i += 2) {
-                $pairs[] = [$shuffled[$i], $shuffled[$i + 1] ?? null];
-            }
+            // Fun tanpa kelompok: acak murni
+            $this->generateRandomTeams($participants);
         }
 
+        $this->tournament->load('teams.members');
+        session()->flash('message', "Tim berhasil digenerate ({$label})!");
+    }
+
+    /** Fun tanpa kelompok: pasangan acak 2 orang. */
+    private function generateRandomTeams(Collection $participants): void
+    {
+        $shuffled = $participants->shuffle();
         $teamNumber = 1;
-        foreach ($pairs as [$first, $second]) {
+
+        for ($i = 0; $i < $shuffled->count(); $i += 2) {
             $team = $this->tournament->teams()->create([
                 'name' => 'Tim ' . $teamNumber,
             ]);
 
-            $team->members()->attach($first->id);
+            $team->members()->attach($shuffled[$i]->id);
 
-            if ($second) {
-                $team->members()->attach($second->id);
+            if (isset($shuffled[$i + 1])) {
+                $team->members()->attach($shuffled[$i + 1]->id);
             }
 
             $teamNumber++;
         }
-
-        $this->tournament->load('teams.members');
-        session()->flash('message', 'Tim berhasil digenerate!');
     }
 
     /**
-     * Bangun pasangan tim agar peserta dari kelompok yang sama
-     * TIDAK berada di satu tim — selama masih ada kelompok lain.
-     *
-     * Strategi greedy: setiap kali ambil peserta dari kelompok terbesar,
-     * pasang dengan peserta dari kelompok LAIN terbesar. Kalau semua sisa
-     * peserta satu kelompok (tidak ada pilihan lain), baru dipasangkan
-     * satu tim — itu tak terhindarkan.
-     *
-     * @return array<int, array{0: Participant, 1: Participant|null}>
+     * Fun dengan kelompok: acak tapi usahakan peserta sekelompok TIDAK satu tim.
+     * Greedy: ambil dari kelompok terbesar, pasangkan dengan kelompok lain terbesar.
+     * Same-group pairing hanya kalau tak terhindarkan.
      */
-    private function pairAvoidingSameGroup(Collection $participants): array
+    private function generateRandomTeamsAvoidingGroups(Collection $participants): void
     {
-        // Kelompokkan, acak urutan dalam tiap kelompok (variasi), urut terbesar dulu
         $groups = $participants
             ->groupBy(fn ($p) => $p->group_name ?? '')
             ->map(fn ($g) => $g->values()->shuffle())
             ->sortByDesc(fn ($g) => $g->count());
 
-        $teams = [];
+        $teamNumber = 1;
 
         while ($groups->filter->isNotEmpty()->isNotEmpty()) {
             // Peserta 1: dari kelompok terbesar yang masih ada
@@ -192,10 +199,123 @@ class TournamentShow extends Component
                 $second = null;
             }
 
-            $teams[] = [$first, $second];
+            $team = $this->tournament->teams()->create([
+                'name' => 'Tim ' . $teamNumber,
+            ]);
+
+            $team->members()->attach($first->id);
+
+            if ($second) {
+                $team->members()->attach($second->id);
+            }
+
+            $teamNumber++;
+        }
+    }
+
+    /** Real (kelompok aktif): pasangkan peserta 2-2 dalam kelompok. */
+    private function generateTeamsFromGroups(Collection $participants): void
+    {
+        $byGroup = $participants
+            ->groupBy(fn ($p) => $p->group_name ?: 'Tanpa Kelompok')
+            ->map(fn ($g) => $g->values()->shuffle());
+
+        foreach ($byGroup as $groupName => $members) {
+            $pairIndex = 1;
+
+            for ($i = 0; $i < $members->count(); $i += 2) {
+                $team = $this->tournament->teams()->create([
+                    'name' => "{$groupName} {$pairIndex}",
+                    'group_name' => $groupName,
+                ]);
+
+                $team->members()->attach($members[$i]->id);
+
+                if (isset($members[$i + 1])) {
+                    $team->members()->attach($members[$i + 1]->id);
+                }
+
+                $pairIndex++;
+            }
+        }
+    }
+
+    // ========== ATUR MANUAL ==========
+
+    public ?int $pairingParticipantId = null;
+
+    /** Klik peserta: pertama = tandai, kedua = pasangkan, klik yang sama = batal. */
+    public function pairingClick($id): void
+    {
+        if (! $this->ensureStatus('Atur manual hanya bisa saat status draft.', Tournament::STATUS_DRAFT)) {
+            return;
         }
 
-        return $teams;
+        $id = (int) $id;
+
+        if ($this->pairingParticipantId === null) {
+            $this->pairingParticipantId = $id;
+            return;
+        }
+
+        if ($this->pairingParticipantId === $id) {
+            $this->pairingParticipantId = null;
+            return;
+        }
+
+        $this->pairWith($this->pairingParticipantId, $id);
+    }
+
+    /** Bikin tim dari dua peserta (harus sekelompok & belum berpasangan). */
+    private function pairWith(int $firstId, int $secondId): void
+    {
+        $this->pairingParticipantId = null;
+
+        $first = $this->tournament->participants()->findOrFail($firstId);
+        $second = $this->tournament->participants()->findOrFail($secondId);
+
+        // Harus sekelompok
+        if ($first->group_name !== $second->group_name) {
+            session()->flash('error', 'Pasangan harus berasal dari kelompok yang sama.');
+            return;
+        }
+
+        $paired = fn (Participant $p) => $this->tournament->teams()
+            ->whereHas('members', fn ($q) => $q->where('participant_id', $p->id))
+            ->exists();
+
+        if ($paired($first) || $paired($second)) {
+            session()->flash('error', 'Keduanya harus belum berpasangan.');
+            return;
+        }
+
+        $groupName = $first->group_name ?: 'Tanpa Kelompok';
+        $index = $this->tournament->teams()->where('group_name', $groupName)->count() + 1;
+
+        $team = $this->tournament->teams()->create([
+            'name' => "{$groupName} {$index}",
+            'group_name' => $groupName,
+        ]);
+
+        $team->members()->attach([$first->id, $second->id]);
+
+        $this->tournament->load('teams.members');
+        session()->flash('message', "Tim {$team->name} dibuat: {$first->name} & {$second->name}.");
+    }
+
+    /** Bongkar tim → anggotanya kembali ke pool belum berpasangan. */
+    public function unpairTeam($teamId): void
+    {
+        if (! $this->ensureStatus('Atur manual hanya bisa saat status draft.', Tournament::STATUS_DRAFT)) {
+            return;
+        }
+
+        $team = $this->tournament->teams()->findOrFail($teamId);
+        $team->members()->detach();
+        $team->delete();
+
+        $this->tournament->load('teams.members');
+        session()->flash('message', "Tim {$team->name} dibongkar.");
     }
 
     // ========== BRACKET ==========

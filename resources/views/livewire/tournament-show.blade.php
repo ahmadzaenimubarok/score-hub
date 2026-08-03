@@ -209,7 +209,11 @@
             @endif
 
             <div class="space-y-2">
-                @forelse ($tournament->participants as $p)
+                @php
+                    $sortedParticipants = $tournament->participants
+                        ->sortBy(fn ($p) => strtolower(($p->group_name ?? '') . '|' . $p->name));
+                @endphp
+                @forelse ($sortedParticipants as $p)
                     <div class="flex items-center justify-between px-4 py-3 bg-gray-800/50 rounded-lg">
                         <span class="flex items-center gap-2 min-w-0">
                             <span class="truncate">{{ $p->name }}</span>
@@ -238,26 +242,95 @@
     @if($tab === 'teams')
         <div>
             @if($tournament->participants->count() >= 2 && $tournament->status === 'draft')
-                <button wire:click="generateTeams" class="mb-6 h-11 px-5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
-                    🔄 Generate Tim (acak)
-                </button>
+                <div class="mb-6 flex flex-wrap items-center gap-3">
+                    @if($tournament->use_groups)
+                        <button wire:click="generateTeams('random')" class="h-11 px-5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
+                            🔄 Generate Acak (campur)
+                        </button>
+                        <button wire:click="generateTeams('byGroup')" class="h-11 px-5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-700 font-medium rounded-lg transition-colors text-sm">
+                            🏷️ Generate Per Kelompok
+                        </button>
+                        <p class="w-full text-xs text-gray-500">
+                            Acak = campur antar kelompok (fun) · Per Kelompok = pasang 2-2 dalam kelompok, 1 kelompok bisa jadi beberapa tim
+                        </p>
+                    @else
+                        <button wire:click="generateTeams('random')" class="h-11 px-5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors text-sm">
+                            🔄 Generate Tim (acak)
+                        </button>
+                    @endif
+
+                    @if(($tournament->teams->count() > 0 || $tournament->gameMatches->count() > 0) && $tournament->status === 'draft')
+                        <button wire:click="generateBracket" class="h-11 px-5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-700 font-medium rounded-lg transition-colors text-sm">
+                            🏆 Generate Bracket
+                        </button>
+                    @endif
+                </div>
             @elseif($tournament->participants->count() < 2)
                 <p class="mb-6 text-sm text-gray-500">Minimal 2 peserta untuk generate tim.</p>
             @endif
 
-            @if(($tournament->teams->count() > 0 || $tournament->gameMatches->count() > 0) && $tournament->status === 'draft')
-                <button wire:click="generateBracket" class="mb-6 ml-3 h-11 px-5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-700 font-medium rounded-lg transition-colors text-sm">
-                    🏆 Generate Bracket
-                </button>
+            @if($tournament->use_groups && $tournament->status === 'draft' && $tournament->participants->count() >= 2)
+                @php
+                    // Tim hasil generate acak tidak punya group_name → sembunyikan section manual
+                    $randomGenerated = $tournament->teams->isNotEmpty()
+                        && $tournament->teams->every(fn ($t) => blank($t->group_name));
+                    $pairedIds = $tournament->teams->flatMap(fn ($t) => $t->members->pluck('id'))->all();
+                    $pool = $tournament->participants
+                        ->filter(fn ($p) => ! in_array($p->id, $pairedIds))
+                        ->groupBy(fn ($p) => $p->group_name ?? 'Tanpa Kelompok');
+                @endphp
+                @if(! $randomGenerated)
+                <div class="mb-6 px-4 py-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <h4 class="font-semibold text-sm text-emerald-400">✋ Atur Pasangan Manual</h4>
+                    <p class="text-xs text-gray-500 mt-1">Klik 2 peserta dari kelompok yang sama untuk membuat tim. Klik peserta yang sama lagi untuk batal.</p>
+
+                    @foreach($pool as $groupName => $members)
+                        @if($members->isNotEmpty())
+                            <div class="mt-3">
+                                <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide">{{ $groupName }}</div>
+                                <div class="flex flex-wrap gap-2 mt-2">
+                                    @foreach($members as $p)
+                                        <button wire:click="pairingClick({{ $p->id }})"
+                                                class="px-3 h-9 rounded-full border text-sm transition-colors
+                                                {{ $pairingParticipantId === $p->id
+                                                    ? 'bg-emerald-600 border-emerald-500 text-white ring-2 ring-emerald-400/50'
+                                                    : 'bg-gray-700/60 border-gray-600 text-gray-200 hover:bg-gray-600' }}">
+                                            {{ $p->name }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    @endforeach
+
+                    @if($pool->isEmpty())
+                        <p class="text-xs text-gray-500 mt-2">Semua peserta sudah berpasangan. 🎉</p>
+                    @endif
+                </div>
+                @endif
             @endif
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                @forelse ($tournament->teams as $team)
+                @forelse ($tournament->teams->sortBy(fn ($t) => strtolower($t->name)) as $team)
                     <div class="px-4 py-3 bg-gray-800/50 rounded-lg border border-gray-700">
-                        <h4 class="font-semibold text-emerald-400">{{ $team->name }}</h4>
-                        <p class="text-sm text-gray-400 mt-1">
-                            {{ $team->members->pluck('name')->join(' & ') }}
-                        </p>
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <h4 class="font-semibold text-emerald-400">{{ $team->name }}</h4>
+                                @if($team->group_name)
+                                    <span class="inline-block mt-1 text-[11px] px-2 py-0.5 rounded-full bg-gray-700 text-gray-400">{{ $team->group_name }}</span>
+                                @endif
+                                <p class="text-sm text-gray-400 mt-1">
+                                    {{ $team->members->pluck('name')->join(' & ') }}
+                                </p>
+                            </div>
+                            @if($tournament->status === 'draft' && $team->group_name)
+                                <button wire:click="unpairTeam({{ $team->id }})"
+                                        class="shrink-0 w-8 h-8 rounded-full bg-gray-700/70 hover:bg-red-600/60 text-gray-400 hover:text-white transition-colors"
+                                        title="Bongkar pasangan">
+                                    ✕
+                                </button>
+                            @endif
+                        </div>
                     </div>
                 @empty
                     <p class="text-center py-8 text-gray-500 col-span-full">Belum ada tim. Generate tim dari peserta yang sudah ditambahkan.</p>
